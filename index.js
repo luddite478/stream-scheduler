@@ -58,7 +58,7 @@ async function get_page(id) {
 }
 
 const is_accepted_media_type = (type) => type === 'video' || type === 'audio' || type === 'image' || type === 'synced_block'
-const filter_out_unneded_block_info = (block) => {
+const filter_out_unneeded_block_info = (block) => {
 	return {
 		type: block.type,
 		[block.type]: block[block.type],
@@ -72,7 +72,7 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 			
 			const contents = await get_page_contents(page_meta.id)
 			const accepted_blocks = contents.filter((block) => is_accepted_media_type(block.type))
-			const filtered_blocks = accepted_blocks.map((block) => filter_out_unneded_block_info(block))
+			const filtered_blocks = accepted_blocks.map((block) => filter_out_unneeded_block_info(block))
 
 			return { 
 				meta: { 
@@ -250,6 +250,7 @@ async function main() {
 	let ffplayout_files_list = await get_ffplayout_files_list()
 	await download_notion_files_if_needed(ffplayout_files_list, playlist_pages_data)
 	ffplayout_files_list = await get_ffplayout_files_list()
+	console.log(ffplayout_files_list)
 }
 
 main()
