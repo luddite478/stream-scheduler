@@ -3,3 +3,9 @@ node_modules/
 *.mp4
 *.wav
 *.png
+tmp
+ffmpeg_std*
+ffprobe*
+playlists
+media/
+mock*
