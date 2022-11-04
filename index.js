@@ -1,66 +1,29 @@
-const { Client } = require("@notionhq/client")
 const fs = require('fs')
 require('dotenv').config()
 const axios = require('axios')
 const URL = require('url')
 const path = require('path')
 const moment = require('moment')
+const momentDurationFormatSetup = require("moment-duration-format")
+momentDurationFormatSetup(moment)
+
 const { merge_audio_and_video, merge_audio_and_image } = require('./ffmpeg_merge')
-const { get_duration } = require('./utils')
 
-const notion = new Client({
-  auth: process.env.NOTION_TOKEN,
-})
+const { download_file } = require('./utils')
 
-async function get_playlist_pages_meta() {
-	try {
-	    const playlist_pages_meta = await notion.databases.query({
-	    database_id: process.env.NOTION_DB_ID,
-		    filter: {
-				property: "tags",
-		    	multi_select: {
-		      		contains: "playlist"
-		    	},
-		  	},
-		})
+const { save_ffplayout_playlist,
+		delete_ffplayout_playlist,
+		get_ffplayout_files_list, 
+		generate_ffplayout_playlist } = require('./ffplayout')
 
-		return playlist_pages_meta.results
+const { get_playlist_pages_meta,
+		get_page_contents,
+		get_page,
+		set_page_play_time } = require('./notion')
 
-	} catch(e) {
-		console.log(e)
-	}
-}
-
-async function get_page_contents(id) {
-	try {
-
-	    const contents = await notion.blocks.children.list({
-		    block_id: id
-     	})
-
-		return contents.results
-
-	} catch(e) {
-		console.log(e)
-	}
-}
-
-async function get_page(id) {
-	try {
-
-	    const contents = await notion.pages.retrieve({
-		    page_id: id
-     	})
-
-		return contents
-
-	} catch(e) {
-		console.log(e)
-	}
-}
 
 const is_accepted_media_type = (type) => type === 'video' || type === 'audio' || type === 'image' || type === 'synced_block'
-const filter_out_unneeded_block_info = (block) => {
+const filter_out_unneeded_block_data = (block) => {
 	return {
 		type: block.type,
 		[block.type]: block[block.type],
@@ -74,16 +37,13 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 	try {
 		return await Promise.all(
 			playlist_pages_meta.map(async (page_meta) => {
-				
-				const contents = await get_page_contents(page_meta.id)
-				const accepted_blocks = contents.filter((block) => is_accepted_media_type(block.type))
-				const filtered_blocks = accepted_blocks.map((block) => filter_out_unneeded_block_info(block))
-
 				return { 
 					meta: { 
-						id:	page_meta.id
+						id:	page_meta.id,
+						play_time: page_meta.properties['play time'].date,
+						params: page_meta.properties.params.rich_text
 					},
-					contents: filtered_blocks
+					contents: await get_page_contents(page_meta.id)
 				}
 			})
 		)
@@ -92,115 +52,32 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 	}
 }
 
+function filter_playlist_pages_data(playlist_pages_data) {
 
-function extract_media_from_page(page) {
-	const page_media = []
-	page.contents.forEach((block) => {
-		if (block.type === 'video') {
-			page_media.push({
-				page_id: page.meta.id,
-				type: 'video',
-				media: block.video.file.url
-			})
-		// TODO: add audio, etc
-		}
-	})
-
-	return page_media
-}
-
-
-async function get_ffplayout_files_list() {
 	try {
+		return playlist_pages_data.map((page_data) => {
+				
+				// filter contents
+				const { contents } = page_data
+				const accepted_blocks = contents.filter((block) => is_accepted_media_type(block.type))
+				const filtered_blocks = accepted_blocks.map((block) => filter_out_unneeded_block_data(block))
+				return { 
+					meta: { 
+						id:	page_data.meta.id,
+						...page_data.meta
+					},
+					contents: filtered_blocks
+				}
 
-		const { FFPAPI_TOKEN, FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
+			// filter empty pages
+			}).filter(page_data => page_data.contents.length > 0)
 
-		const res = await axios({
-			method: 'post',
-			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/file/1/browse/`,
-			headers: { 
-				'Authorization': `Bearer ${FFPAPI_TOKEN}`,
-			},
-			data: { 'source': '/' }
-		})
-
-		return res.data.files
-
-	} catch (e) {
-		console.log('get_ffplayout_files_list: error with code', e.response.status)
+	} catch(e) {
+		console.log('filter_playlist_pages_data error:', e)
 	}
 }
 
-function create_ffplayout_playlist(pages_data, total_duration=86400, params) {
-
-	const playlist = []
-	const duration_cash = [] // otherwise we need to call ffprobe every iteration
-	let i = 0
-	while (i < total_duration) {
-		pages_data.forEach(page => {
-			let page_with_duration = duration_cash.filter(mp4 => mp4.path === page.mp4)[0]
-			
-			let duraion
-			if (!page_with_duration) {
-				duration = get_duration(page.mp4)
-				duration_cash.push({
-					path: page.mp4,
-					duration: duration
-				})
-			} else {
-				duration = page_with_duration.duration
-			}
-
-			playlist.push({
-				in: 0,
-				out: duration,
-				duration,
-				source: page.mp4	
-			})
-
-			i+=duration
-		})
-	}
-
-	return {
-		channel: "1",
-		date: moment().format('YYYY-MM-DD'),
-		program: playlist
-	}
-}
-
-async function download_file(fileUrl, outputLocationPath) {
- 	const writer = fs.createWriteStream(outputLocationPath)
-
-	return axios({
-		method: 'get',
-		url: fileUrl,
-		responseType: 'stream',
-	}).then(response => {
-
-    //ensure that the user can call `then()` only when the file has
-    //been downloaded entirely.
-		return new Promise((resolve, reject) => {
-			response.data.pipe(writer)
-				let error = null
-				writer.on('error', err => {
-					error = err;
-					writer.close();
-					reject(err)
-				})
-
-				writer.on('close', () => {
-					if (!error) {
-						resolve(true)
-					}
-			//no need to call the reject here, as it will have been called in the
-			//'error' stream;
-			})
-		})
-	})
-}
-
-function create_ffplayout_filename(block, row) {
+function create_block_filename(block, row) {
 	const type = block.type
 	const parent_page_id = block.parent_page_id
 	const parsed_url = URL.parse(block[type].file.url, true)
@@ -211,11 +88,17 @@ function create_ffplayout_filename(block, row) {
 }
 
 
-function find_parent_page_id_by_filename(filename) {
-
+function does_block_file_exist(filename, ffplayout_files_list) {
+	if (process.env.ENVIRONMENT === 'windows_dev') {
+		const file_path = path.join(process.env.TMP_MEDIA_FOLDER, filename)
+		return fs.existsSync(file_path)
+	
+	} else {
+		return ffplayout_files_list.find((file) => file.name === filename)
+	}	
 }
 
-async function download_pages_files_if_needed(ffplayout_files_list, playlist_pages_data) {
+async function download_pages_files_if_not_exist(ffplayout_files_list, playlist_pages_data) {
 	try {
 		// Download files from Notion if needed
 		const block_files_to_download = []
@@ -227,10 +110,10 @@ async function download_pages_files_if_needed(ffplayout_files_list, playlist_pag
 				 	return
 				}
 
+				const filename = create_block_filename(block, i+1)
+
 				// Check if file exists on the disk
-				const filename = create_ffplayout_filename(block, i+1)
-				
-				if (ffplayout_files_list.find((file) => file.name === filename)) {
+				if (does_block_file_exist(filename, ffplayout_files_list)) {
 					console.log(`\nFile ${filename} already exists`)
 					return
 				}
@@ -241,18 +124,20 @@ async function download_pages_files_if_needed(ffplayout_files_list, playlist_pag
 			})
 		})	
 
-		console.log(`\nGoing to download ${block_files_to_download.length} files`)
-		await Promise.all(block_files_to_download.map(({ url, dst_path }) => download_file(url, dst_path)))
-		console.log('\nFiles are successfully downloaded')	
+		if (block_files_to_download.length > 0) {
+			console.log(`\nGoing to download ${block_files_to_download.length} files`)
+			await Promise.all(block_files_to_download.map(({ url, dst_path }) => download_file(url, dst_path)))
+			console.log('\nFiles are successfully downloaded')				
+		}
 		
-		// Add file paths to pages contents info 
+		// Add files paths to pages contents info 
 		return playlist_pages_data.map((page_data) => {
 			return  {
 				...page_data,
 				contents: page_data.contents.map((block, i) => {
 					return {
 						...block,
-						file_path: path.join(process.env.TMP_MEDIA_FOLDER, create_ffplayout_filename(block, i+1))
+						file_path: path.join(process.env.TMP_MEDIA_FOLDER, create_block_filename(block, i+1))
 					}
 				})
 			}
@@ -267,14 +152,23 @@ async function download_pages_files_if_needed(ffplayout_files_list, playlist_pag
 function merge_page_media_files(audio_files, video_files, params, output_path) {
 
 	try {
-		if (audio_files.length > 0 && video_files.length > 0 && video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
+		if (	   audio_files.length > 0 && 
+		   		   video_files.length > 0 && 
+		    	   video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
+
 			return merge_audio_and_video(audio_files[0].audio, video_files[0].video, params, output_path)
 
-		} else if (audio_files.length > 0 && video_files.length > 0 && video_files[0].hasOwnProperty('image')) {
+		} else if (audio_files.length > 0 && 
+			       video_files.length > 0 && 
+			       video_files[0].hasOwnProperty('image')) {
+
 			console.log(`Merging ${audio_files[0].audio} and ${video_files[0].video}`)
+
 			return merge_audio_and_image(audio_files[0].audio, video_files[0].image, params, output_path)
 	
-		} else if (audio_files.length === 0 && video_files.length > 0) {
+		} else if (audio_files.length === 0 && 
+			       video_files.length > 0) {
+
 			console.log(`Creating silent video with  ${video_files[0].video}`)
 			return create_silent_video(video_files[0].video, params, output_path) 
 	
@@ -288,14 +182,14 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 }
 
 
-function create_mp4s_from_pages_data(playlist_pages_data) {
+function generate_mp4s(playlist_pages_data) {
 
 	try {
-
 		return playlist_pages_data.map((page_data) => {
 
 			const audio_files = []
 			const video_files = []
+			const { play_time } = page_data
 			const params = []
 			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, page_data.meta.id + '.mp4')
 			page_data.contents.map((block) => {
@@ -321,38 +215,105 @@ function create_mp4s_from_pages_data(playlist_pages_data) {
 	}
 }
 
-async function save_ffplayout_playlist(ffplayout_playlist) {
-	try {
+function squash_playlist(ffplayout_playlist, start_time='06:00:00.0', split_program=[]) {
+	
+	let index_time = 0
+	const p = [] 
+	let prev_entry = { source: '' }
+	ffplayout_playlist.program.forEach((entry,i) => {
 
-		const { FFPAPI_TOKEN, FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
+		if (prev_entry.source !== entry.source) {
+			p.push({
+				in: entry.in,
+				out: entry.out,
+				duration: entry.out,
+				source: entry.source
+			}) 
+			index_time = 0
 
-		const res = await axios({
-			method: 'post',
-			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/playlist/1/`,
-			headers: { 
-				'Authorization': `Bearer ${FFPAPI_TOKEN}`,
-			},
-			data: ffplayout_playlist
+		} else {
+			p[p.length-1].out = index_time + entry.duration
+			p[p.length-1].duration = index_time + entry.duration
+		}
+
+		index_time += entry.duration
+		prev_entry = entry 
+	})
+
+	ffplayout_playlist.program = p
+	return ffplayout_playlist
+}
+
+function format_abs_secs_to_day_time(secs) {
+	return moment.utc(moment.duration(secs+(6*3600), 'seconds').asMilliseconds()).format('HH:mm:ss')
+}
+
+function generate_daytime_playlist(squashed_playlist) {
+
+	const daytime_playlist = []
+
+	let prev_end = format_abs_secs_to_day_time(0)
+	squashed_playlist.program.forEach(entry => {
+		
+		const start = prev_end 
+		const end = format_abs_secs_to_day_time(entry.duration)
+		prev_end = end
+
+		daytime_playlist.push({
+			...entry,
+			start_daytime: start,
+			end_daytime: end
 		})
+	})
 
-		console.log(res.data)
+	return daytime_playlist
+}
 
-	} catch (e) {
-		console.log('update_ffplayout_playlist: error with code', e)
+
+async function watch_playlist_changes() {
+	const playlist_pages_meta = JSON.stringify(await get_playlist_pages_meta())
+	let playlist_pages_meta_cash = ''
+
+	if (fs.existsSync('playlist_pages_meta.json')) {
+		playlist_pages_meta_cash = fs.readFileSync('playlist_pages_meta.json', 'utf-8')
 	}
+
+	// If playlist pages meta info changed - update ffplayout playlist
+	if (playlist_pages_meta !== playlist_pages_meta_cash) {
+		await update_ffplayout_playlist()
+	}
+
+	fs.writeFileSync("playlist_pages_meta.json", playlist_pages_meta)
+}
+
+
+async function update_ffplayout_playlist() {
+	// 1. Get media from Notion pages
+	const playlist_pages_meta            = await get_playlist_pages_meta()
+	let   playlist_pages_data            = await get_playlist_pages_data(playlist_pages_meta)
+	      playlist_pages_data            =       filter_playlist_pages_data(playlist_pages_data)
+	const ffplayout_files_list           = await get_ffplayout_files_list()
+	const playlist_pages_data_with_paths = await download_pages_files_if_not_exist(ffplayout_files_list, playlist_pages_data)
+
+	// 2. Merge media files on each page to one mp4 file
+	const pages_with_mp4s = generate_mp4s(playlist_pages_data_with_paths)
+	
+	// 3. Update ffplayout playlist
+	const ffplayout_playlist = generate_ffplayout_playlist(pages_with_mp4s)
+	await delete_ffplayout_playlist(moment().format('YYYY-MM-DD'))
+	await save_ffplayout_playlist(ffplayout_playlist)
+
+	// 4. Generate user-friendly playlist
+	const squashed_playlist  = squash_playlist(ffplayout_playlist)
+	const daytime_playlist   = generate_daytime_playlist(squashed_playlist)
+	console.log(daytime_playlist)
 }
 
 async function main() {
-	// Get media from Notion pages
-	const playlist_pages_meta = await get_playlist_pages_meta()
-	const playlist_pages_data = await get_playlist_pages_data(playlist_pages_meta)
-	const ffplayout_files_list  = await get_ffplayout_files_list()
-	const playlist_pages_data_with_paths = await download_pages_files_if_needed(ffplayout_files_list, playlist_pages_data)
-	// Merge media files on each page to 1 mp4 
-	const pages_with_mp4s = create_mp4s_from_pages_data(playlist_pages_data_with_paths)
-	// Generate and upload ffplayout playlist
-	const ffplayout_playlist = create_ffplayout_playlist(pages_with_mp4s, 86400)
-	await save_ffplayout_playlist(ffplayout_playlist)
+	await update_ffplayout_playlist()
+	// squash_playlist(playlist)
+	// generate_playlist_program(playlist)
+	// await set_page_play_time()
 }
 
 main()

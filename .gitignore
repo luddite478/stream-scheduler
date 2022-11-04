@@ -9,3 +9,6 @@ ffprobe*
 playlists
 media/
 mock*
+server-setup.sh
+mock*
+playlist_pages_meta.json
