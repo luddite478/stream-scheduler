@@ -2,6 +2,7 @@ const { spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const axios = require('axios')
+const { parseISO, differenceInSeconds } = require('date-fns')
 
 function get_duration(file) {
 	try {
@@ -52,7 +53,25 @@ async function download_file(fileUrl, outputLocationPath) {
 	})
 }
 
+function is_json_string(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+function get_time_interval_sec(start, end) {
+	return differenceInSeconds(
+		parseISO(start), 
+		parseISO(end)
+	)
+}
+
 module.exports = {
 	get_duration,
-	download_file
+	download_file,
+	is_json_string,
+	get_time_interval_sec
 }

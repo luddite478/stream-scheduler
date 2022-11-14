@@ -12,3 +12,6 @@ mock*
 server-setup.sh
 mock*
 playlist_pages_meta.json
+tv-media
+state/state.json
+placeholder
