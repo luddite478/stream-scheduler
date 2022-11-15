@@ -68,102 +68,6 @@ async function get_ffplayout_files_list() {
 	}
 }
 
-// function add_placeholders(pages_data) {
-// 	const pages_with_placeholders = []
-// 	let prev_end = 0
-// 	let next_start = pages_data[0].meta.play_time.abs_start
-
-// 	pages_data.forEach((page, i) => {
-		
-// 		let placeholder = {
-// 			meta: {
-// 				play_time: { 
-// 					abs_start: prev_end,
-// 					abs_end: next_start
-// 				}
-// 			},
-// 			mp4: 'deep_brown_noise.mp4'
-// 		}
-
-// 		if (next_start > 0) {
-// 			pages_with_placeholders.push(placeholder, page)
-// 		}
-		
-// 		if ((i+1) < pages_data.length) {
-// 			prev_end = pages_data[i].meta.play_time.abs_end
-// 			next_start = pages_data[i+1].meta.play_time.abs_start	
-// 		}
-
-// 		// if last elem
-// 		if (i === pages_data.length - 1 && pages_data[i].meta.play_time.abs_end < 86400) {
-			
-// 			let placeholder = {
-// 				meta: {
-// 					play_time: { 
-// 						abs_start: prev_end,
-// 						abs_end: next_start,
-// 					}
-// 				},
-// 				mp4: 'deep_brown_noise.mp4'
-// 			}
-// 			placeholder.meta.play_time.abs_start = pages_data[i].meta.play_time.abs_end
-// 			placeholder.meta.play_time.abs_end = 86400
-
-// 			pages_with_placeholders.push(placeholder)
-// 		}
-// 	})
-
-// 	return pages_with_placeholders
-// }
-
-function add_placeholders(pages_data) {
-	const pages_with_placeholders = []
-	let prev_end = 0
-	let next_start = pages_data[0].meta.play_time.abs_start
-
-	pages_data.forEach((page, i) => {
-		
-		let placeholder = {
-			meta: {
-				play_time: { 
-					abs_start: prev_end,
-					abs_end: next_start
-				}
-			},
-			mp4: 'deep_brown_noise.mp4'
-		}
-
-		if (next_start > 0) {
-			pages_with_placeholders.push(placeholder, page)
-		}
-		
-		if ((i+1) < pages_data.length) {
-			prev_end = pages_data[i].meta.play_time.abs_end
-			next_start = pages_data[i+1].meta.play_time.abs_start	
-		}
-
-		// if last elem
-		if (i === pages_data.length - 1 && pages_data[i].meta.play_time.abs_end < 86400) {
-			
-			let placeholder = {
-				meta: {
-					play_time: { 
-						abs_start: prev_end,
-						abs_end: next_start,
-					}
-				},
-				mp4: 'deep_brown_noise.mp4'
-			}
-			placeholder.meta.play_time.abs_start = pages_data[i].meta.play_time.abs_end
-			placeholder.meta.play_time.abs_end = 86400
-
-			pages_with_placeholders.push(placeholder)
-		}
-	})
-
-	return pages_with_placeholders
-}
-
 
 function mark_pages_out_of_playlist_range(pages_data) {
 	const today_yyyy_mm_dd = format(parseISO(formatISO(new Date())), "yyyy-MM-dd")
@@ -230,89 +134,136 @@ function set_in_out_time(pages_data) {
 	return pages_data_with_duration
 }
 
-function generate_playlist(pages_data) {
 
-	pages_data = set_abs_start_and_end(pages_data)
+function add_placeholders(date, pages_data) {
+	const { PLACEHOLDER_PATH } = process.env
+	const pages_with_placeholders = []
 
-	pages_data = mark_pages_out_of_playlist_range(pages_data)
-	
-	pages_data = set_in_out_time(pages_data)
+	// let next_start
+	let prev_end = 0
+	const day_start  = new Date(date)
+	day_start.setTime(day_start.getTime() + (6-4)*60*60*1000) // +6 playlist -4 UTC
+	let duration = (new Date(pages_data[0].meta.play_time.start) - day_start)/1000
 
-	// pages_data = set_in_duration(pages_data)
+	pages_data.forEach((page, i) => {
+		let placeholder = {
+			meta: {
+				play_time: { 
+					duration: duration,
+					playlist_day: date
+				}
+			},
+			mp4: PLACEHOLDER_PATH
+		}
 
-	// pages_data = add_placeholders(pages_data)
-	
-	pages_data.forEach(p => {
-		console.log('p',p.meta)
+		if (duration > 0) {
+			pages_with_placeholders.push(placeholder, page)
+		}
+			
+		if ((i+1) < pages_data.length) {
+			prev_end = placeholder.meta.play_time.duration + page.meta.play_time.duration
+			const next_start = (new Date(pages_data[i+1].meta.play_time.start) - day_start)/1000
+			duration = next_start - prev_end
+		}
 	})
 
-	
-	// add_placeholders(pages_data)
+	// add last placeholder to the end
+	let duration_sum = 0
+	pages_with_placeholders.forEach(page => duration_sum+=page.meta.play_time.duration)
+	if (duration_sum < 86400) {
+		pages_with_placeholders.push({
+			meta: {
+				play_time: {
+					duration: 86400-duration_sum,
+					playlist_day: date
+				}		
+			},
+			mp4: PLACEHOLDER_PATH
+		})
+	}
 
-	// pages_data = pages_with_play_time.sort((page1, page2) => {
-	// 	return page1.meta.play_time.abs_in < page2.meta.play_time.abs_in
-	// })
+	return pages_with_placeholders
+}
 
+function generate_playlists(pages_data) {
+	// find dates in pages data
+	const dates = [...new Set(
+			pages_data.map(page => page.meta.play_time.playlist_day
+		)
+	)]
 
-	// console.log(pages_data)
-	// first_mp4_start = pages_data[0].meta.play_time.abs_in
-	// placeholder_time = first_mp4_start
-	// prev_abs_out = 0
-	// while (i < total_duration) {
-	// 	pages_data.forEach(page => {
-	// 		if (page1.meta.play_time.abs_in < i) {
-	// 			playlist.push({
-	// 				in: 0,
-	// 				out: duration,
-	// 				duration,
-	// 				source: page.mp4	
-	// 			})
-	// 		}
+	const date_page_mapping = dates.map(date => {
+		const date_pages = []
+		pages_data.forEach(page => {
+			if (page.meta.play_time.playlist_day === date){
+				date_pages.push(page)
+			}
+		})
 
-	// 		if 
-	// 	})
-	// }
+		return {
+			date,
+			pages: date_pages
+		}
+	})
 
-	// while (i < total_duration) {
-	// 	pages_data.forEach(page => {
-	// 		// try to find mp4 in cash
-	// 		let page_with_duration = duration_cash.filter(mp4 => mp4.path === page.mp4)[0]
-			
-	// 		let duraion
-	// 		// if not found add video to cash
-	// 		if (!page_with_duration) {
-	// 			duration = get_duration(page.mp4)
-	// 			duration_cash.push({
-	// 				path: page.mp4,
-	// 				duration: duration
-	// 			})
-	// 		} else {
-	// 		// else get duration
-	// 			duration = page_with_duration.duration
-	// 		}
+	const date_page_mapping_with_placeholders = date_page_mapping.map(d => {
+		return {
+			date: d.date,
+			pages: add_placeholders(d.date, d.pages)
+		}
+	})
 
-	// 		// add entry to playlist
-	// 		playlist.push({
-	// 			in: 0,
-	// 			out: duration,
-	// 			duration,
-	// 			source: page.mp4	
-	// 		})
+	// Generate ffplayout playlist
+	const playlists = date_page_mapping_with_placeholders.map(d => {
+		return {
+			program: d.pages.map(p => {
+				return {
+					in: 0,
+					out: p.meta.play_time.duration,
+					duration: p.meta.play_time.duration,
+					source: p.mp4
+				}
+			}),
+			date: d.date,
+			channel: '1'
+		}
+	})
+	return playlists
+}
 
-	// 		i+=duration
-	// 	})
-	// }
+function set_pages_playlist_dates(pages_data) {
 
-	// return {
-	// 	channel: "1",
-	// 	date: moment().format('YYYY-MM-DD'),
-	// 	program: playlist
-	// }
+	const pages_with_playlist_dates = []
+	pages_data.forEach(page => {
+		const page_start = page.meta.play_time.start
+		const page_end   = page.meta.play_time.end
+
+		let yyyy_mm_dd_start = new Date(page_start.split('T')[0])
+
+		// if night hours of playlist
+		if (new Date(page.meta.play_time.start).getHours() < 6) {
+			yyyy_mm_dd_start = new Date(yyyy_mm_dd_start.setDate(yyyy_mm_dd_start.getDate()-1))
+		}
+		 																	    // +6 playlist -4 UTC
+		const playlist_day_start = new Date(new Date(yyyy_mm_dd_start).getTime() + (2*60*60*1000))	
+		const playlist_day_end   = new Date(new Date(yyyy_mm_dd_start).getTime() + (26*60*60*1000))
+
+		if (new Date(page.meta.play_time.start) >= playlist_day_start &&
+			new Date(page.meta.play_time.end) < playlist_day_end) {
+			page.meta.play_time.playlist_day = yyyy_mm_dd_start.toISOString().split('T')[0]
+		} else {
+			console.log('\nset_page_playlist_day: out of range')
+		}
+		pages_with_playlist_dates.push(page)
+	})
+
+	return pages_with_playlist_dates
 }
 
 module.exports = {
 	save_ffplayout_playlist,
 	delete_ffplayout_playlist,
 	get_ffplayout_files_list,
-	generate_playlist
+	generate_playlists,
+	set_pages_playlist_dates
 }

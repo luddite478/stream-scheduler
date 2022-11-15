@@ -30,6 +30,59 @@ function save_pages_state(pages_data) {
 	fs.writeFileSync(STATE_FILE, json_new_state)
 }
 
+function get_modified_pages_ids(pages_data) {
+	try {
+		const { STATE_FILE } = process.env
+
+		let modified_pages_ids = []
+
+		if (fs.existsSync(STATE_FILE)) {
+
+			const state_file = fs.readFileSync(STATE_FILE, 'utf-8')
+
+			if (!is_json_string(state_file)   ||
+			    !is_valid_state(JSON.parse(state_file))) {
+
+				modified_pages_ids = pages_data.map(page => page.meta.id)
+				console.log('\nget_modified_pages_ids: state is not valid')
+				console.log('\nModified pages ids:', modified_pages_ids)
+				return modified_pages_ids
+			}
+
+			const cashed_pages = JSON.parse(state_file).pages
+
+			// get modified pages
+			pages_data.forEach(page => {
+				cashed_pages.forEach(c_page => {
+					if (page.meta.id === c_page.meta.id &&
+						page.meta.last_edited_time !== c_page.meta.last_edited_time) {
+						modified_pages_ids.push(page.meta.id)
+					}
+	 			})
+			})
+
+			// get new pages
+			const new_pages_ids = pages_data.filter(page => {
+				return cashed_pages.find(c_page => c_page.meta.id !== page.meta.id)
+			}).map(page => page.meta.id)
+
+			modified_pages_ids.concat(new_pages_ids)
+
+		} else {
+			// if no state file - process all pages
+			modified_pages_ids = pages_data.map(page => page.meta.id)
+		}
+
+		console.log('\nModified pages ids:', modified_pages_ids)
+
+		return modified_pages_ids
+
+	} catch(e) {
+		console.log('Can not get changed pages ids:', e)
+	}
+}
+
 module.exports = {
-	save_pages_state
+	save_pages_state,
+	get_modified_pages_ids
 }

@@ -69,8 +69,30 @@ async function set_page_play_time(id, date) {
 	}
 }
 
+async function get_playlist_pages_data(playlist_pages_meta) {
+	try {
+		return await Promise.all(
+			playlist_pages_meta.map(async (page_meta) => {
+				return { 
+					meta: { 
+						id:	page_meta.id,
+						play_time: page_meta.properties['play time'].date,
+						params: page_meta.properties.params.rich_text,
+						last_edited_time: page_meta.last_edited_time,
+						tags: page_meta.properties['tags'].multi_select.map(t=>t.name)
+					},
+					contents: await get_page_contents(page_meta.id)
+				}
+			})
+		)
+	} catch(e) {
+		console.log('get_playlist_pages_data error:', e)
+	}
+}
+
 module.exports = {
 	get_playlist_pages_meta,
 	get_page_contents,
-	get_page
+	get_page,
+	get_playlist_pages_data
 }
