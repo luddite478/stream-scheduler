@@ -35,7 +35,7 @@ const { get_playlist_pages_meta,
 		get_playlist_pages_data } = require('./notion')
 
 
-const is_accepted_media_type = (type) => type === 'video' || type === 'audio' || type === 'image' || type === 'synced_block'
+const is_accepted_media_type = (type) => type === 'video' || type === 'audio' || type === 'image' || type === 'synced_block' || type === 'bookmark'
 const filter_out_unneeded_block_data = (block) => {
 	return {
 		type: block.type,
@@ -87,7 +87,7 @@ function does_block_file_exist(filename) {
 	return fs.existsSync(file_path)
 }
 
-async function download_pages_files_if_not_exist(playlist_pages_data) {
+async function download_pages_media_if_not_exist(playlist_pages_data) {
 	try {
 		// Download files from Notion if needed
 		console.log('\nChecking pages media files on the disk...')
@@ -167,10 +167,11 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const audio_file = loop_audio(audio_files[0].audio, a_repeats)
 			const video_file = loop_video(video_files[0].video, v_repeats)
 			// merge to mp4
-			return merge_audio_and_video(audio_file, video_file, params, output_path)
+			const p = merge_audio_and_video(audio_file, video_file, params, output_path)
 			// delete intermediate files
 			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
+			return p
 
 		} else if (audio_files.length > 0 && 
 			       video_files.length > 0 && 
@@ -307,26 +308,38 @@ function sort_pages_by_start_time(pages_data) {
 	})
 }
 
+function filter_outdated_pages(pages_data) {
+	return pages_data.filter(page => {
+		const playlist_day = new Date(page.meta.play_time.playlist_day)
+		const playlist_day_start = new Date(new Date(playlist_day).getTime() + ((6-4)*60*60*1000))	
+		const curr_day = new Date().toISOString().split('T')[0]
+		const curr_day_start = new Date(new Date(curr_day).getTime() + ((6-4)*60*60*1000))
+		return playlist_day_start >= curr_day_start 
+	})
+}
 
 async function get_pages_data() {
-	const playlist_pages_meta = await get_playlist_pages_meta()
-	const playlist_pages_data = await get_playlist_pages_data(playlist_pages_meta)
-	return filter_pages_data(playlist_pages_data)
+	const pages_meta = await get_playlist_pages_meta()
+	const pages_data = await get_playlist_pages_data(pages_meta)	
+	console.log(pages_data[0].contents)
+	return filter_pages_data(pages_data)
 }
 
 async function process_pages_data(pages_data) {
-	pages_data = await download_pages_files_if_not_exist(pages_data)
+	pages_data = await download_pages_media_if_not_exist(pages_data)
 	pages_data = set_pages_duration(pages_data)
 	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
+	pages_data = filter_outdated_pages(pages_data)
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
-	pages_data = generate_mp4s(pages_data, modified_pages_ids)
-	return sort_pages_by_start_time(pages_data)	
+	return generate_mp4s(pages_data, modified_pages_ids)
 }
 
-async function update_playlist(pages_data) {
+async function update_playlists(pages_data) {
+	pages_data = sort_pages_by_start_time(pages_data)	
 	const playlists = generate_playlists(pages_data)
 
 	for (const pllst of playlists) {
+		console.log(pllst)
 		await delete_ffplayout_playlist(pllst.date)
 		await save_ffplayout_playlist(pllst)
   	}
@@ -340,11 +353,12 @@ async function main() {
 	pages_data = await process_pages_data(pages_data)
 
 	// 3. Update playlist
-	await update_playlist(pages_data)
+	await update_playlists(pages_data)
 
-	// 4. Save notion pages state
+	// 4. Save state
 	save_pages_state(pages_data)
 
+	// 5. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000));
 }
 
