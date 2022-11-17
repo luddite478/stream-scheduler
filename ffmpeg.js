@@ -25,11 +25,9 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 	        output_path
 	    ].filter(Boolean) 
 
-	    console.log(`\nMerging ${audio_file}\nand ${image_file}\nto ${output_path}`)
+	    console.log(`\n*** Merging ${audio_file}\nand ${image_file}\nto ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
 		// const ffmpeg_stderr_path = path.join(__dirname, `ffmpeg_stderr.log`)
-
-		console.log(`\n${proc.stderr.toString()}`)
 
 		return output_path
 			// proc.stderr.setEncoding("utf8")
@@ -84,7 +82,7 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 	        output_path
 	    ].filter(Boolean) 
 
-	    console.log(`\nMerging ${audio1_path}\nand ${video1_path}\n  to ${output_path}`)
+	    console.log(`\n*** Merging ${audio1_path}\nand ${video1_path}\nto ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
 		// const ffmpeg_stderr_path = path.join(__dirname, `ffmpeg_stderr.log`)
 
@@ -167,7 +165,7 @@ function loop_audio(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-	    console.log(`\nLooping ${input_path}\nNumber of loops: ${repeats_number} `)
+	    console.log(`\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`)
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 
@@ -203,7 +201,7 @@ function loop_video(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-	    console.log(`\nLooping ${input_path}\nNumber of loops: ${repeats_number} `)
+	    console.log(`\n*** Looping ${input_path}\nNumber of loops: ${repeats_number} `)
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 

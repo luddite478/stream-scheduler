@@ -143,13 +143,11 @@ function get_number_of_repeats_and_remainder(file, target_duration) {
 	const file_duration = get_duration(file)
 	const repeats = Math.floor(target_duration/file_duration)
 	const remainder = target_duration % file_duration
-	console.log('\n***')
-	console.log('Calculating repeats number to match target duration for file:\n',file)
+	console.log('\n*** Calculating repeats number to match target duration for file:\n',file)
 	console.log('target duration:', target_duration)
 	console.log('file duration:', file_duration)
 	console.log('repeats:', repeats)
 	console.log('remainder:', remainder)
-	console.log('***')
 	return { repeats, remainder }
 }
 
@@ -321,7 +319,6 @@ function filter_outdated_pages(pages_data) {
 async function get_pages_data() {
 	const pages_meta = await get_playlist_pages_meta()
 	const pages_data = await get_playlist_pages_data(pages_meta)	
-	console.log(pages_data[0].contents)
 	return filter_pages_data(pages_data)
 }
 
@@ -362,4 +359,4 @@ async function main() {
 	await new Promise(r => setTimeout(r, 5000));
 }
 
-main()
+setInterval(main, 10000)
