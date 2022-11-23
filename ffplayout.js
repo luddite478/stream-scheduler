@@ -6,7 +6,7 @@ const intervalToDuration = require('date-fns/intervalToDuration')
 const duraion_fns = require('duration-fns')
 
 
-async function save_ffplayout_playlist(ffplayout_playlist) {
+async function save_ffplayout_playlist(ffplayout_playlist, token) {
 	try {
 
 		const { FFPAPI_TOKEN, FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
@@ -15,19 +15,19 @@ async function save_ffplayout_playlist(ffplayout_playlist) {
 			method: 'post',
 			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/playlist/1/`,
 			headers: { 
-				'Authorization': `Bearer ${FFPAPI_TOKEN}`,
+				'Authorization': `Bearer ${token}`,
 			},
 			data: ffplayout_playlist
 		})
 
-		console.log(res.data)
+		console.log('\n', res.data)
 
 	} catch (e) {
 		console.log('update_ffplayout_playlist: error with code', e)
 	}
 }
 
-async function delete_ffplayout_playlist(date) {
+async function delete_ffplayout_playlist(date, token) {
 	try {
 
 		const { FFPAPI_TOKEN, FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
@@ -36,7 +36,7 @@ async function delete_ffplayout_playlist(date) {
 			method: 'delete',
 			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/playlist/1/${date}`,
 			headers: { 
-				'Authorization': `Bearer ${FFPAPI_TOKEN}`,
+				'Authorization': `Bearer ${token}`,
 			}
 		})
 
@@ -47,7 +47,7 @@ async function delete_ffplayout_playlist(date) {
 	}
 }
 
-async function get_ffplayout_files_list() {
+async function get_ffplayout_files_list(token) {
 	try {
 
 		const { FFPAPI_TOKEN, FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
@@ -56,7 +56,7 @@ async function get_ffplayout_files_list() {
 			method: 'post',
 			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/file/1/browse/`,
 			headers: { 
-				'Authorization': `Bearer ${FFPAPI_TOKEN}`,
+				'Authorization': `Bearer ${token}`,
 			},
 			data: { 'source': '/' }
 		})
@@ -68,6 +68,54 @@ async function get_ffplayout_files_list() {
 	}
 }
 
+async function reset_player_state(token) {
+	try {
+
+		const { FFPLAYOUT_IP, FFPLAYOUT_PORT} = process.env
+
+		const res = await axios({
+			method: 'post',
+			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/api/control/1/playout/`,
+			headers: { 
+				'Authorization': `Bearer ${token}`,
+			},
+			data: { 'command': 'reset' }
+		})
+
+		console.log('\n',res.data.result)
+		
+		return res.data.result
+
+	} catch (e) {
+		console.log('reset_player_state: error with code', e)
+	}
+}
+
+async function get_token() {
+	try {
+
+		const { 
+			FFPLAYOUT_IP, 
+			FFPLAYOUT_PORT,
+			FFPLAYOUT_USERNAME,
+			FFPLAYOUT_PASSWORD
+		} = process.env
+
+		const res = await axios({
+			method: 'post',
+			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/auth/login/`,
+			data: { 
+				'username': FFPLAYOUT_USERNAME,
+				'password': FFPLAYOUT_PASSWORD
+			}
+		})
+
+		return res.data.user.token
+
+	} catch (e) {
+		console.log('get_token: error with code', e)
+	}
+}
 
 function mark_pages_out_of_playlist_range(pages_data) {
 	const today_yyyy_mm_dd = format(parseISO(formatISO(new Date())), "yyyy-MM-dd")
@@ -265,5 +313,7 @@ module.exports = {
 	delete_ffplayout_playlist,
 	get_ffplayout_files_list,
 	generate_playlists,
-	set_pages_playlist_dates
+	set_pages_playlist_dates,
+	reset_player_state,
+	get_token
 }

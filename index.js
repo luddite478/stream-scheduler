@@ -13,7 +13,8 @@ const { is_valid_state } = require('./state/validation')
 const { save_pages_state, get_modified_pages_ids } = require('./state')
 
 const { merge_audio_and_video, 
-		merge_audio_and_image, 
+		merge_audio_and_image,
+		merge_audio, 
 		loop_audio, 
 		loop_video } = require('./ffmpeg')
 
@@ -26,7 +27,9 @@ const { save_ffplayout_playlist,
 		delete_ffplayout_playlist,
 		get_ffplayout_files_list,
 		generate_playlists,
-		set_pages_playlist_dates } = require('./ffplayout')
+		set_pages_playlist_dates,
+		reset_player_state,
+		get_token } = require('./ffplayout')
 
 const { get_playlist_pages_meta,
 		get_page_contents,
@@ -171,6 +174,30 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			fs.unlinkSync(video_file)
 			return p
 
+		// multiple audio, one video
+		} else if (
+			audio_files.length > 1 && 
+		    video_files.length === 1 && 
+		    video_files[0].hasOwnProperty('video')) { 
+			const src_video = video_files[0].video
+			// loop to match duration
+			audio_files = audio_files.map(({audio}) => {
+				const { repeats: a_repeats, remainder: a_remainder }  = get_number_of_repeats_and_remainder(audio, params.duration)
+				return loop_audio(audio, a_repeats)
+			})
+			// merge audio files
+			const merged_audio = merge_audio(audio_files)
+			// loop video
+			const { repeats: v_repeats, remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+			const video_file = loop_video(src_video, v_repeats)
+			// merge to result mp4
+			const p = merge_audio_and_video(merged_audio, video_file, params, output_path)
+			// delete intermediate files
+			audio_files.forEach(f => fs.unlinkSync(audio_file))
+			fs.unlinkSync(merged_audio)
+			fs.unlinkSync(video_file)
+			return p
+
 		} else if (audio_files.length > 0 && 
 			       video_files.length > 0 && 
 			       video_files[0].hasOwnProperty('image')) {
@@ -198,15 +225,10 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 function generate_mp4s(pages_data, changed_pages_ids) {
 
 	try {
-		// if no pages changed just return pages_data with appended paths
+		// if no pages return null
 		if (changed_pages_ids.length === 0) {
 			console.log('\nNo pages changed or added, skiping generating mp4s...')
-			return pages_data.map((page) => {
-				return {
-					...page,
-					mp4: path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, page.meta.id + '.mp4')
-				}
-			})
+			return null
 		}
 
 		const pages_to_process = pages_data.filter(page => {
@@ -328,17 +350,21 @@ async function process_pages_data(pages_data) {
 	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
 	pages_data = filter_outdated_pages(pages_data)
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
+	if (modified_pages_ids.length === 0 ) {
+		return null
+	}
 	return generate_mp4s(pages_data, modified_pages_ids)
 }
 
-async function update_playlists(pages_data) {
+async function update_playlists(pages_data, token) {
+	
 	pages_data = sort_pages_by_start_time(pages_data)	
 	const playlists = generate_playlists(pages_data)
 
 	for (const pllst of playlists) {
 		console.log(pllst)
-		await delete_ffplayout_playlist(pllst.date)
-		await save_ffplayout_playlist(pllst)
+		await delete_ffplayout_playlist(pllst.date, token)
+		await save_ffplayout_playlist(pllst, token)
   	}
 }
 
@@ -347,16 +373,28 @@ async function main() {
 	let pages_data = await get_pages_data()
 
 	// 2. Merge media files on each page to one mp4 file
-	pages_data = await process_pages_data(pages_data)
+	new_pages_data = await process_pages_data(pages_data)
 
-	// 3. Update playlist
-	await update_playlists(pages_data)
+	// 3. If don't need to update - return 
+	if (!new_pages_data) {
+		return
+	}
 
-	// 4. Save state
-	save_pages_state(pages_data)
+	// 4. Get ffplayout token 
+	const token = await get_token()
 
-	// 5. Sleep 5 sec
-	await new Promise(r => setTimeout(r, 5000));
+	// 5. Update playlist
+	await update_playlists(new_pages_data, token)
+
+	// 6. Reset player state
+	await reset_player_state(token)
+
+	// 7. Save state
+	save_pages_state(new_pages_data)
+
+	// 8. Sleep 5 sec
+	await new Promise(r => setTimeout(r, 5000))
 }
 
-setInterval(main, 10000)
+main()
+// setInterval(main, 10000)

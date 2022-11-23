@@ -66,7 +66,7 @@ function get_modified_pages_ids(pages_data) {
 				return cashed_pages.find(c_page => c_page.meta.id !== page.meta.id)
 			}).map(page => page.meta.id)
 
-			modified_pages_ids.concat(new_pages_ids)
+			modified_pages_ids = modified_pages_ids.concat(new_pages_ids)
 
 		} else {
 			// if no state file - process all pages

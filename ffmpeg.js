@@ -114,6 +114,38 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 
 }
 
+function merge_audio(audio_files) {
+	try {
+		
+		const basename = path.basename(audio_files[0])
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[multiple_audio]-' + basename)
+		const inputs = audio_files.map(audio => {
+			return ['-i', audio]
+		}).flat()
+
+
+		const args = [
+	        '-hide_banner',
+	        ...inputs,
+	        '-filter_complex', `amix=inputs=${audio_files.length}:duration=longest:dropout_transition=3`,
+	       	'-y',
+	        output_path
+	    ]
+
+	    console.log(`\n*** Merging aduio files ${audio_files}\noutput file: ${output_path}`)
+		const proc = spawnSync('ffmpeg', args)
+		
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not merge audio files ${audio_files}, error: `, e)
+	}
+}
+
 function fadein_fadeout_audio(input_path, fade=0.015) {
 	try {
 		
@@ -129,6 +161,7 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 
 	    console.log(`\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
+		// console.log(`\n${proc.stderr.toString()}`)
 
 		return output_path
 
@@ -216,6 +249,7 @@ function loop_video(input_path, repeats_number) {
 module.exports = {
 	merge_audio_and_video,
 	merge_audio_and_image,
+	merge_audio,
 	fadein_fadeout_audio,
 	loop_audio,
 	loop_video
