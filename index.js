@@ -396,5 +396,5 @@ async function main() {
 	await new Promise(r => setTimeout(r, 5000))
 }
 
-main()
-// setInterval(main, 10000)
+// main()
+setInterval(main, 10000)
