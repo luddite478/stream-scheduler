@@ -80,7 +80,7 @@ function create_block_filename(block, row) {
 	const parsed_url = URL.parse(block[type].file.url, true)
 	const created_time = moment(block.created_time).format('YYYYMMDD[T]HHmmss[Z]')
 	const [ , , , url_filename ]  = parsed_url.pathname.split('/')
-	const { name, ext} = path.parse(url_filename)
+	const { name, ext } = path.parse(url_filename)
 	return `${name}-row=${row}-created=${created_time}-p_id=${parent_page_id}${ext}`
 }
 
@@ -162,17 +162,21 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 		    video_files.length === 1 && 
 		    video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
 
+			const src_audio = audio_files[0].audio
+			const src_video = video_files[0].video
 			// loop to match duration
-			const { repeats: a_repeats, remainder: a_remainder }  = get_number_of_repeats_and_remainder((audio_files[0].audio), params.duration)
-			const { repeats: v_repeats, remainder: v_remainder }  = get_number_of_repeats_and_remainder((video_files[0].video), params.duration)
-			const audio_file = loop_audio(audio_files[0].audio, a_repeats)
-			const video_file = loop_video(video_files[0].video, v_repeats)
+			const { repeats: a_repeats, 
+				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
+			const { repeats: v_repeats, 
+				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+			const audio_file = loop_audio(src_audio, a_repeats)
+			const video_file = loop_video(src_video, v_repeats)
 			// merge to mp4
-			const p = merge_audio_and_video(audio_file, video_file, params, output_path)
+			const result_mp4 = merge_audio_and_video(audio_file, video_file, params, output_path)
 			// delete intermediate files
 			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
-			return p
+			return result_mp4
 
 		// multiple audio, one video
 		} else if (
@@ -181,22 +185,24 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 		    video_files[0].hasOwnProperty('video')) { 
 			const src_video = video_files[0].video
 			// loop to match duration
-			audio_files = audio_files.map(({audio}) => {
-				const { repeats: a_repeats, remainder: a_remainder }  = get_number_of_repeats_and_remainder(audio, params.duration)
+			const looped_audios = audio_files.map(({audio}) => {
+				const { repeats: a_repeats, 
+					    remainder: a_remainder }  = get_number_of_repeats_and_remainder(audio, params.duration)
 				return loop_audio(audio, a_repeats)
 			})
 			// merge audio files
-			const merged_audio = merge_audio(audio_files)
+			const merged_audio = merge_audio(looped_audios)
 			// loop video
-			const { repeats: v_repeats, remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+			const { repeats: v_repeats, 
+				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
 			const video_file = loop_video(src_video, v_repeats)
 			// merge to result mp4
-			const p = merge_audio_and_video(merged_audio, video_file, params, output_path)
+			const result_mp4 = merge_audio_and_video(merged_audio, video_file, params, output_path)
 			// delete intermediate files
-			audio_files.forEach(f => fs.unlinkSync(audio_file))
+			looped_audios.forEach(audio => fs.unlinkSync(audio))
 			fs.unlinkSync(merged_audio)
 			fs.unlinkSync(video_file)
-			return p
+			return result_mp4
 
 		} else if (audio_files.length > 0 && 
 			       video_files.length > 0 && 
@@ -225,10 +231,10 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 function generate_mp4s(pages_data, changed_pages_ids) {
 
 	try {
-		// if no pages return null
+		// if no modified pages return
 		if (changed_pages_ids.length === 0) {
 			console.log('\nNo pages changed or added, skiping generating mp4s...')
-			return null
+			return
 		}
 
 		const pages_to_process = pages_data.filter(page => {
@@ -247,7 +253,7 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 				duration: page.meta.play_time.duration
 			} 
 
-			page.contents.map((block) => {
+			page.contents.forEach((block) => {
 
 				if (block.type === 'video' || block.type === 'image') {
 					video_files.push({[block.type]: block.file_path})
@@ -266,7 +272,7 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 		})
 
 	} catch (e) {
-		console.log(e)
+		console.log('generate_mp4s error:', e)
 	}
 }
 
@@ -344,15 +350,11 @@ async function get_pages_data() {
 	return filter_pages_data(pages_data)
 }
 
-async function process_pages_data(pages_data) {
+async function process_pages_data(pages_data, modified_pages_ids) {
 	pages_data = await download_pages_media_if_not_exist(pages_data)
 	pages_data = set_pages_duration(pages_data)
 	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
 	pages_data = filter_outdated_pages(pages_data)
-	const modified_pages_ids = get_modified_pages_ids(pages_data)
-	if (modified_pages_ids.length === 0 ) {
-		return null
-	}
 	return generate_mp4s(pages_data, modified_pages_ids)
 }
 
@@ -372,27 +374,25 @@ async function main() {
 	// 1. Get data from Notion pages
 	let pages_data = await get_pages_data()
 
-	// 2. Merge media files on each page to one mp4 file
-	new_pages_data = await process_pages_data(pages_data)
+	// 2. Get modified pages ids
+	const modified_pages_ids = get_modified_pages_ids(pages_data)
 
-	// 3. If don't need to update - return 
-	if (!new_pages_data) {
-		return
+	if (!modified_pages_ids.length) {
+		return 
 	}
 
-	// 4. Get ffplayout token 
+	// 3. Process and merge media files on each page to one mp4 file
+	new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
+
+	// 4. Update ffplayout playlist
 	const token = await get_token()
-
-	// 5. Update playlist
 	await update_playlists(new_pages_data, token)
-
-	// 6. Reset player state
 	await reset_player_state(token)
 
-	// 7. Save state
+	// 5. Save program state as json
 	save_pages_state(new_pages_data)
 
-	// 8. Sleep 5 sec
+	// 6. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000))
 }
 
