@@ -41,10 +41,11 @@ function get_modified_pages_ids(pages_data) {
 			const state_file = fs.readFileSync(STATE_FILE, 'utf-8')
 
 			if (!is_json_string(state_file)   ||
-			    !is_valid_state(JSON.parse(state_file))) {
+			    !is_valid_state(JSON.parse(state_file)) ||
+			    !JSON.parse(state_file).pages.length) {
 
 				modified_pages_ids = pages_data.map(page => page.meta.id)
-				console.log('\nget_modified_pages_ids: state is not valid')
+				console.log('\nget_modified_pages_ids: state is empty or not valid')
 				console.log('\nModified pages ids:', modified_pages_ids)
 				return modified_pages_ids
 			}
