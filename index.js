@@ -345,29 +345,40 @@ function filter_outdated_pages(pages_data) {
 }
 
 async function get_pages_data() {
-	const pages_meta = await get_playlist_pages_meta()
-	const pages_data = await get_playlist_pages_data(pages_meta)	
-	return filter_pages_data(pages_data)
+	try {
+		const pages_meta = await get_playlist_pages_meta()
+		const pages_data = await get_playlist_pages_data(pages_meta)	
+		return filter_pages_data(pages_data)
+	} catch (e) {
+		console.log('get_pages_data error:', e)
+	}
 }
 
 async function process_pages_data(pages_data, modified_pages_ids) {
-	pages_data = await download_pages_media_if_not_exist(pages_data)
-	pages_data = set_pages_duration(pages_data)
-	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
-	pages_data = filter_outdated_pages(pages_data)
-	return generate_mp4s(pages_data, modified_pages_ids)
+	try {
+		pages_data = await download_pages_media_if_not_exist(pages_data)
+		pages_data = set_pages_duration(pages_data)
+		pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
+		pages_data = filter_outdated_pages(pages_data)
+		return generate_mp4s(pages_data, modified_pages_ids)
+	} catch (e) {
+		console.log('process_pages_data error:', e)
+	}
 }
 
 async function update_playlists(pages_data, token) {
-	
-	pages_data = sort_pages_by_start_time(pages_data)	
-	const playlists = generate_playlists(pages_data)
+	try {
+		pages_data = sort_pages_by_start_time(pages_data)
+		const playlists = generate_playlists(pages_data)
 
-	for (const pllst of playlists) {
-		console.log(pllst)
-		await delete_ffplayout_playlist(pllst.date, token)
-		await save_ffplayout_playlist(pllst, token)
-  	}
+		for (const pllst of playlists) {
+			console.log(pllst)
+			await delete_ffplayout_playlist(pllst.date, token)
+			await save_ffplayout_playlist(pllst, token)
+	  	}
+	 } catch (e) {
+		console.log('update_playlists error:', e)
+	}
 }
 
 async function main() {
@@ -387,7 +398,7 @@ async function main() {
 	// 4. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
-	await reset_player_state(token)
+	await reset_player_state(token)	
 
 	// 5. Save program state as json
 	save_pages_state(new_pages_data)
