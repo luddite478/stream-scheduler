@@ -6,6 +6,9 @@ const path = require('path')
 const moment = require('moment')
 const momentDurationFormatSetup = require("moment-duration-format")
 momentDurationFormatSetup(moment)
+
+const { discord_send } = require('./discord-bot')
+
 const { format, parseISO, formatISO } = require('date-fns')
 const { formatInTimeZone } = require('date-fns-tz')
 
@@ -401,12 +404,12 @@ async function main() {
 	}
 
 	// 3. Process and merge media files on each page to one mp4 file
-	new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
+	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
 
 	// 4. Update ffplayout playlist
-	// const token = await get_token()
-	// await update_playlists(new_pages_data, token)
-	// await reset_player_state(token)	
+	const token = await get_token()
+	await update_playlists(new_pages_data, token)
+	await reset_player_state(token)	
 
 	// 5. Save program state as json
 	save_pages_state(new_pages_data)
