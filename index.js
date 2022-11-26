@@ -438,7 +438,7 @@ async function main() {
 	// 3. Show current state
 	const state = get_state()
 	console.log(`State:\n${JSON.stringify(state, null, 2)}`)
-	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
+	
 
 	// 1. Get data from Notion pages
 	let pages_data = await get_pages_data()
@@ -451,6 +451,8 @@ async function main() {
 		main()
 		return 
 	}
+
+	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
 	// 4. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
