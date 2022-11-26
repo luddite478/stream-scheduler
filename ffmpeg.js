@@ -277,7 +277,7 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 function reencode_video(input_path) {
 	try {
 		
-		const basename = path.basename(audio_file)
+		const basename = path.basename(input_path)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[reencode_video]-' + basename)
 	    const args = [
 	        '-hide_banner',
