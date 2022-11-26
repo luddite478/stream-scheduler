@@ -20,7 +20,8 @@ const { merge_audio_and_video,
 		merge_audio_and_color_image,
 		merge_audio, 
 		loop_audio, 
-		loop_video } = require('./ffmpeg')
+		loop_video,
+		reencode_video } = require('./ffmpeg')
 
 const { download_file, 
 		is_json_string, 
@@ -176,10 +177,11 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 
 			const src_video = video_files[0].video
 
-			const { repeats: v_repeats, 
-				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+			const { repeats:   v_repeats, 
+				    remainder: v_remainder } = get_number_of_repeats_and_remainder(src_video, params.duration)
 
-			const looped_video = loop_video(src_video, v_repeats)
+			const reencoded_video = reencode_video(src_video) 
+			const looped_video = loop_video(reencoded_video, v_repeats)
 			fs.renameSync(looped_video, output_path)
 			fs.unlinkSync(src_video)
 
@@ -193,8 +195,8 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 
 			const src_audio = audio_files[0].audio
 
-			const { repeats: a_repeats, 
-				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
+			const { repeats:   a_repeats, 
+				    remainder: a_remainder } = get_number_of_repeats_and_remainder(src_audio, params.duration)
 
 			const looped_audio = loop_audio(src_audio, v_repeats)
 			const result_mp4 = merge_audio_and_color_image(looped_audio)
@@ -211,9 +213,9 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const src_audio = audio_files[0].audio
 			const src_video = video_files[0].video
 			// loop to match duration
-			const { repeats: a_repeats, 
+			const { repeats:   a_repeats, 
 				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
-			const { repeats: v_repeats, 
+			const { repeats:   v_repeats, 
 				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
 			const audio_file = loop_audio(src_audio, a_repeats)
 			const video_file = loop_video(src_video, v_repeats)

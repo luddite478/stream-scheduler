@@ -225,7 +225,7 @@ function loop_video(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`
+	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
@@ -274,6 +274,36 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	}
 }
 
+function reencode_video(input_path) {
+	try {
+		
+		const basename = path.basename(audio_file)
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[reencode_video]-' + basename)
+	    const args = [
+	        '-hide_banner',
+	        '-i', input_path,
+	       	'-y',
+	        output_path
+	    ]
+
+	    const log_msg = `\n*** Reencoding video ${input_path} : ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (reencode_video):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not add fade to ${input_path}, error: `, e)
+	}
+}
+
+
 module.exports = {
 	merge_audio_and_video,
 	merge_audio_and_image,
@@ -281,5 +311,6 @@ module.exports = {
 	merge_audio,
 	fadein_fadeout_audio,
 	loop_audio,
+	reencode_video,
 	loop_video
 }
