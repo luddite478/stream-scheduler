@@ -10,7 +10,7 @@ function save_pages_state(pages_data) {
 	let new_state = {}
 
 	if (fs.existsSync(STATE_FILE) &&
-		is_json_string(STATE_FILE) &&
+		is_json_string(fs.readFileSync(STATE_FILE, 'utf-8')) &&
 		is_valid_state(JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8')))) {
 		
 		const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'))
@@ -30,6 +30,39 @@ function save_pages_state(pages_data) {
 	console.log(`\nSaving state to ${STATE_FILE}...`)
 	discord_send('New state:\n', json_new_state)
 	fs.writeFileSync(STATE_FILE, json_new_state)
+}
+
+function get_state(pages_data, params=['last_edited_time']) {
+
+	const { STATE_FILE } = process.env
+
+	let new_state = {}
+	
+	if (fs.existsSync(STATE_FILE) &&
+		is_json_string(fs.readFileSync(STATE_FILE, 'utf-8')) &&
+		is_valid_state(JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8')))) {
+		
+		const state_file = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'))
+
+		if(!state_file.pages.length) {
+			return null
+		}
+		
+		const state = state_file.pages.map(page =>{
+			const { start, end, duration } = page.meta.play_time
+			const { id, last_edited_time } = page.meta
+			
+			return {
+				id,
+				start,
+				end,
+				duration,
+				last_edited_time
+			}
+		})
+
+		return state
+	}
 }
 
 function get_modified_pages_ids(pages_data) {
@@ -87,5 +120,6 @@ function get_modified_pages_ids(pages_data) {
 
 module.exports = {
 	save_pages_state,
-	get_modified_pages_ids
+	get_modified_pages_ids,
+	get_state
 }

@@ -13,7 +13,7 @@ const { format, parseISO, formatISO } = require('date-fns')
 const { formatInTimeZone } = require('date-fns-tz')
 
 const { is_valid_state } = require('./state/validation')
-const { save_pages_state, get_modified_pages_ids } = require('./state')
+const { save_pages_state, get_modified_pages_ids, get_state } = require('./state')
 
 const { merge_audio_and_video, 
 		merge_audio_and_image,
@@ -423,7 +423,7 @@ async function update_playlists(pages_data, token) {
 
 		for (const pllst of playlists) {
 			console.log(pllst)
-			discord_send('Updating playlist(s):\n', JSON.stringify(pllst, null, 2))
+			discord_send(`Updating playlist(s):\n ${JSON.stringify(pllst, null, 2)}`)
 			await delete_ffplayout_playlist(pllst.date, token)
 			await save_ffplayout_playlist(pllst, token)
 	  	}
@@ -434,6 +434,11 @@ async function update_playlists(pages_data, token) {
 }
 
 async function main() {
+
+	// 3. Show current state
+	const state = get_state()
+	console.log(`State:\n${JSON.stringify(state, null, 2)}`)
+	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
 	// 1. Get data from Notion pages
 	let pages_data = await get_pages_data()
@@ -447,20 +452,21 @@ async function main() {
 		return 
 	}
 
-	// 3. Process and merge media files on each page to one mp4 file
+	// 4. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
 
-	// 4. Update ffplayout playlist
+	// 5. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
 	await reset_player_state(token)	
 
-	// 5. Save program state as json
+	// 6. Save program state as json
 	save_pages_state(new_pages_data)
 
-	// 6. Sleep 5 sec
+	// 7. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000))
 
+	// 8. Repeat
 	main()
 }
 
