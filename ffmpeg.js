@@ -232,9 +232,39 @@ function loop_video(input_path, repeats_number) {
 	}
 }
 
+function merge_audio_and_color_image(audio_file, color='#121212') {
+	try {
+		
+		const basename = path.basename(input_path)
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_blank_image]-' + basename)
+	    const args = [
+	        '-hide_banner',
+	        '-i', audio_file,
+	        '-f', 'lavfi',
+	        '-i', `color=c=${color}:s=1920x640:d=60:r=25,format=pix_fmts=yuv420p`,
+	       	'-y',
+	        output_path
+	    ]
+
+	    console.log(`\n*** Merging audio ${audio_file} and color ${color}: ${output_path}`)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (fadein_fadeout_audio):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not add fade to ${input_path}, error: `, e)
+	}
+}
+
 module.exports = {
 	merge_audio_and_video,
 	merge_audio_and_image,
+	merge_audio_and_color_image,
 	merge_audio,
 	fadein_fadeout_audio,
 	loop_audio,

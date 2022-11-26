@@ -17,6 +17,7 @@ const { save_pages_state, get_modified_pages_ids } = require('./state')
 
 const { merge_audio_and_video, 
 		merge_audio_and_image,
+		merge_audio_and_color_image,
 		merge_audio, 
 		loop_audio, 
 		loop_video } = require('./ffmpeg')
@@ -168,8 +169,41 @@ function get_number_of_repeats_and_remainder(file, target_duration) {
 function merge_page_media_files(audio_files, video_files, params, output_path) {
 
 	try {
+		// one video, no audio
+		if (audio_files.length === 0 && 
+		    video_files.length === 1 && 
+		    video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
+
+			const src_video = video_files[0].video
+
+			const { repeats: v_repeats, 
+				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+
+			const looped_video = loop_video(src_video, v_repeats)
+			fs.unlinkSync(src_video)
+
+			return looped_video
+
+		// no video, one audio	
+		} else if (
+			audio_files.length === 1 && 
+		    video_files.length === 0 && 
+		    video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
+
+			const src_audio = audio_files[0].audio
+
+			const { repeats: a_repeats, 
+				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
+
+			const looped_audio = loop_audio(src_audio, v_repeats)
+			const result_mp4 = merge_audio_and_color_image(audio_file)
+			fs.unlinkSync(src_audio)
+			fs.unlinkSync(looped_audio)
+			return audio_file
+
 		// one video, one audio
-		if (audio_files.length === 1 && 
+		} else if (
+			audio_files.length === 1 && 
 		    video_files.length === 1 && 
 		    video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
 
