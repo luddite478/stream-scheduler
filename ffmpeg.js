@@ -253,6 +253,7 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	        '-i', audio_file,
 	        '-f', 'lavfi',
 	        '-i', `color=c=${color}:s=1920x640:d=60:r=25,format=pix_fmts=yuv420p`,
+	        '-acodec', 'aac',
 	       	'-y',
 	        output_path
 	    ]
