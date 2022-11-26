@@ -183,7 +183,7 @@ function loop_audio(input_path, repeats_number) {
 	    ]
 
 
-	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`
+	    const log_msg = '```' + `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}` + '```'
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
