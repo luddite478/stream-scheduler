@@ -34,7 +34,7 @@ function discord_send(text) {
         return
     }
     
-    const text_chunks = chunkSubstr(text, 4000)
+    const text_chunks = chunkSubstr(text, 2000)
 
     text_chunks.forEach(t => {
         discord.bot.channels.cache.get(process.env.DISCORD_CHANNEL_ID).send(t)
