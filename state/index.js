@@ -28,7 +28,6 @@ function save_pages_state(pages_data) {
 
 	const json_new_state = JSON.stringify(new_state, null, 2)
 	console.log(`\nSaving state to ${STATE_FILE}...`)
-	discord_send('New state:\n', json_new_state)
 	fs.writeFileSync(STATE_FILE, json_new_state)
 }
 
@@ -51,13 +50,15 @@ function get_state(pages_data, params=['last_edited_time']) {
 		const state = state_file.pages.map(page =>{
 			const { start, end, duration } = page.meta.play_time
 			const { id, last_edited_time } = page.meta
+			const { mp4 } = page
 			
 			return {
 				id,
 				start,
 				end,
 				duration,
-				last_edited_time
+				last_edited_time,
+				mp4
 			}
 		})
 
