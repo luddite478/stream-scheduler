@@ -28,18 +28,22 @@ function chunkSubstr(str, size) {
   return chunks
 }
 
-function discord_send(text) {
+const wrap_code = (text) => '```' + text + '```'
+
+function discord_send(input_text) {
 
     if (!discord.bot) {
         return
     }
     
-    const text_chunks = chunkSubstr(text, 2000)
+    const text_chunks = chunkSubstr(input_text, 2000)
 
-    text_chunks.forEach(t => {
-        discord.bot.channels.cache.get(process.env.DISCORD_CHANNEL_ID).send(t)
+    text_chunks.forEach(text => {
+        discord.bot.channels.cache.get(process.env.DISCORD_CHANNEL_ID).send(wrap_code(text))
     })
 }
+
+
 
 client.login(process.env.DISCORD_TOKEN)
 
