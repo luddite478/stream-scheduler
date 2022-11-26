@@ -396,8 +396,8 @@ async function get_pages_data() {
 		const pages_data = await get_playlist_pages_data(pages_meta)	
 		return filter_pages_data(pages_data)
 	} catch (e) {
-		console.log('Error (get_pages_data):\n', e)
-		discord_send('Error (get_pages_data):\n', e)
+		console.log('Error (get_pages_data):\n', e.message)
+		discord_send('Error (get_pages_data):\n', e.message)
 	}
 }
 
@@ -410,8 +410,8 @@ async function process_pages_data(pages_data, modified_pages_ids) {
 		pages_data = filter_outdated_pages(pages_data)
 		return generate_mp4s(pages_data, modified_pages_ids)
 	} catch (e) {
-		console.log('Error (process_pages_data):\n', e)
-		discord_send('Error (process_pages_data):\n', e)
+		console.log('Error (process_pages_data):\n', e.message)
+		discord_send('Error (process_pages_data):\n', e.message)
 	}
 }
 
@@ -427,8 +427,8 @@ async function update_playlists(pages_data, token) {
 			await save_ffplayout_playlist(pllst, token)
 	  	}
 	 } catch (e) {
-	 	console.log('Error (update_playlists):\n', e)
-		discord_send('Error (update_playlists):\n', e)
+	 	console.log('Error (update_playlists):\n', e.message)
+		discord_send('Error (update_playlists):\n', e.message)
 	}
 }
 
