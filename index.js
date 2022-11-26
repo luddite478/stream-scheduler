@@ -197,7 +197,7 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const { repeats:   a_repeats, 
 				    remainder: a_remainder } = get_number_of_repeats_and_remainder(src_audio, params.duration)
 
-			const looped_audio = loop_audio(src_audio, v_repeats)
+			const looped_audio = loop_audio(src_audio, a_repeats)
 			const result_mp4 = merge_audio_and_color_image(looped_audio)
 			fs.renameSync(result_mp4, output_path)
 			fs.unlinkSync(looped_audio)
