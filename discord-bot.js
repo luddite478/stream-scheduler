@@ -43,8 +43,6 @@ function discord_send(input_text) {
     })
 }
 
-
-
 client.login(process.env.DISCORD_TOKEN)
 
 module.exports = {
