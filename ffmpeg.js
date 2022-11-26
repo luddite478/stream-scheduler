@@ -286,7 +286,7 @@ function reencode_video(input_path) {
 	        output_path
 	    ]
 
-	    const log_msg = `\n*** Reencoding video ${input_path} : ${output_path}`
+	    const log_msg = `\n*** Reencoding video ${input_path}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)

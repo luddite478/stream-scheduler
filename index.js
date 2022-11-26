@@ -190,8 +190,7 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 		// no video, one audio	
 		} else if (
 			audio_files.length === 1 && 
-		    video_files.length === 0 && 
-		    video_files[0].hasOwnProperty('video')) { // TODO: add multiple files support
+		    video_files.length === 0) { 
 
 			const src_audio = audio_files[0].audio
 
