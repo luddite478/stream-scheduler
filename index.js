@@ -361,7 +361,8 @@ async function get_pages_data() {
 		const pages_data = await get_playlist_pages_data(pages_meta)	
 		return filter_pages_data(pages_data)
 	} catch (e) {
-		console.log('get_pages_data error:', e)
+		console.log('Error (get_pages_data):\n', e)
+		discord_send('Error (get_pages_data):\n', e)
 	}
 }
 
@@ -373,7 +374,8 @@ async function process_pages_data(pages_data, modified_pages_ids) {
 		pages_data = filter_outdated_pages(pages_data)
 		return generate_mp4s(pages_data, modified_pages_ids)
 	} catch (e) {
-		console.log('process_pages_data error:', e)
+		console.log('Error (process_pages_data):\n', e)
+		discord_send('Error (process_pages_data):\n', e)
 	}
 }
 
@@ -388,11 +390,13 @@ async function update_playlists(pages_data, token) {
 			await save_ffplayout_playlist(pllst, token)
 	  	}
 	 } catch (e) {
-		console.log('update_playlists error:', e)
+	 	console.log('Error (update_playlists):\n', e)
+		discord_send('Error (update_playlists):\n', e)
 	}
 }
 
 async function main() {
+
 	// 1. Get data from Notion pages
 	let pages_data = await get_pages_data()
 
@@ -400,6 +404,8 @@ async function main() {
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
 
 	if (!modified_pages_ids.length) {
+		await new Promise(r => setTimeout(r, 5000))
+		main()
 		return 
 	}
 
@@ -416,7 +422,11 @@ async function main() {
 
 	// 6. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000))
+
+	main()
 }
 
-// main()
-setInterval(main, 10000)
+main()
+
+
+

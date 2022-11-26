@@ -31,7 +31,7 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (merge_audio_and_image):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -76,7 +76,7 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (merge_audio_and_video):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -110,7 +110,7 @@ function merge_audio(audio_files) {
 		
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (merge_audio):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -138,7 +138,7 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (fadein_fadeout_audio):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -182,7 +182,7 @@ function loop_audio(input_path, repeats_number) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (loop_audio):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -222,7 +222,7 @@ function loop_video(input_path, repeats_number) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (loop_video):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
