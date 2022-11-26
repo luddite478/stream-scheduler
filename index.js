@@ -38,7 +38,15 @@ const { get_playlist_pages_meta,
 		get_playlist_pages_data } = require('./notion')
 
 
-const is_accepted_media_type = (type) => type === 'video' || type === 'audio' || type === 'image' || type === 'synced_block' || type === 'bookmark'
+const is_accepted_media_type = (type) =>  {
+	return type === 'video' || 
+	       type === 'audio' || 
+	       type === 'image' || 
+	       type === 'synced_block' || 
+	       type === 'bookmark' || 
+	       type === 'code'
+	}
+	
 const filter_out_unneeded_block_data = (block) => {
 	return {
 		type: block.type,
@@ -51,21 +59,21 @@ const filter_out_unneeded_block_data = (block) => {
 function filter_pages_data(playlist_pages_data) {
 	try {
 		const a = playlist_pages_data.map((page_data) => {
-				// filter contents
-				const { contents } = page_data
-				const accepted_blocks = contents.filter((block) => is_accepted_media_type(block.type))
-				const filtered_blocks = accepted_blocks.map((block) => filter_out_unneeded_block_data(block))
-				
-				return { 
-					meta: { 
-						id:	page_data.meta.id,
-						...page_data.meta,
-					},
-					contents: filtered_blocks
-				}
+			// filter contents
+			const { contents } = page_data
+			const accepted_blocks = contents.filter((block) => is_accepted_media_type(block.type))
+			const filtered_blocks = accepted_blocks.map((block) => filter_out_unneeded_block_data(block))
+			
+			return { 
+				meta: { 
+					id:	page_data.meta.id,
+					...page_data.meta,
+				},
+				contents: filtered_blocks
+			}
 
-			// filter empty pages
-			}).filter(page_data => page_data.contents.length > 0)
+		// filter empty pages
+		}).filter(page_data => page_data.contents.length > 0)
 
 		return a
 
@@ -396,9 +404,9 @@ async function main() {
 	new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
 
 	// 4. Update ffplayout playlist
-	const token = await get_token()
-	await update_playlists(new_pages_data, token)
-	await reset_player_state(token)	
+	// const token = await get_token()
+	// await update_playlists(new_pages_data, token)
+	// await reset_player_state(token)	
 
 	// 5. Save program state as json
 	save_pages_state(new_pages_data)

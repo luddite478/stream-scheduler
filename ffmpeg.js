@@ -12,7 +12,6 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 			shortest = '-shortest'
 		}
 
-		
 	    const args = [
 	        '-hide_banner',
 	        '-i', image_file,
@@ -27,27 +26,13 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 
 	    console.log(`\n*** Merging ${audio_file}\nand ${image_file}\nto ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
-		// const ffmpeg_stderr_path = path.join(__dirname, `ffmpeg_stderr.log`)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
 
 		return output_path
-			// proc.stderr.setEncoding("utf8")
-			// proc.stderr.on('data', (data) => {
-			// 	fs.appendFile(ffmpeg_stderr_path, data, (err) => {
-	  //               if (err) {
-	  //                   reject(err)
-	  //               } 
-	  //           })
-	  //       })
-			// console.log('here3')
-			// proc.on('close', (code) => {
-			// 	if (code === 0) {
-			// 		console.log(`Merged ${audio1_path} and ${video1_path}`)	
-			// 		resolve()
-			// 	} else {
-			// 		reject()
-			// 	}
-			// })
-	
+
 	} catch(e) {
 		console.log(`Can not merge ${audio1_path} and ${video1_path}, error: `, e)
 	}
@@ -84,29 +69,12 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 
 	    console.log(`\n*** Merging ${audio1_path}\nand ${video1_path}\nto ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
-		// const ffmpeg_stderr_path = path.join(__dirname, `ffmpeg_stderr.log`)
 
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
 
 		return output_path
-		// proc.stderr.setEncoding("utf8")
-		// proc.stderr.on('data', (data) => {
-		// 	fs.appendFile(ffmpeg_stderr_path, data, (err) => {
-  //               if (err) {
-  //                   reject(err)
-  //               } 
-  //           })
-  //       })
-		// console.log('here3')
-		// proc.on('close', (code) => {
-		// 	if (code === 0) {
-		// 		console.log(`Merged ${audio1_path} and ${video1_path}`)	
-		// 		resolve()
-		// 	} else {
-		// 		reject()
-		// 	}
-		// })
-			
-
 
 	} catch(e) {
 		console.log(`Can not merge ${audio1_path} and ${video1_path}, error: `, e)
@@ -161,7 +129,10 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 
 	    console.log(`\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`)
 		const proc = spawnSync('ffmpeg', args)
-		// console.log(`\n${proc.stderr.toString()}`)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
 
 		return output_path
 
@@ -202,7 +173,10 @@ function loop_audio(input_path, repeats_number) {
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 
-		// console.log(`\n${proc.stderr.toString()}`)
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
+
 		return output_path
 
 	} catch(e) {
@@ -238,7 +212,10 @@ function loop_video(input_path, repeats_number) {
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 
-		// console.log(`\n${proc.stderr.toString()}`)
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+		}
+
 		return output_path
 
 	} catch(e) {
