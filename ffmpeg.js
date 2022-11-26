@@ -235,7 +235,7 @@ function loop_video(input_path, repeats_number) {
 function merge_audio_and_color_image(audio_file, color='#121212') {
 	try {
 		
-		const basename = path.basename(input_path)
+		const basename = path.basename(audio_file)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_blank_image]-' + basename)
 	    const args = [
 	        '-hide_banner',

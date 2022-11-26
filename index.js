@@ -180,9 +180,10 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
 
 			const looped_video = loop_video(src_video, v_repeats)
+			fs.renameSync(looped_video, output_path)
 			fs.unlinkSync(src_video)
 
-			return looped_video
+			return output_path
 
 		// no video, one audio	
 		} else if (
@@ -196,10 +197,10 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
 
 			const looped_audio = loop_audio(src_audio, v_repeats)
-			const result_mp4 = merge_audio_and_color_image(audio_file)
-			fs.unlinkSync(src_audio)
+			const result_mp4 = merge_audio_and_color_image(looped_audio)
+			fs.renameSync(result_mp4, output_path)
 			fs.unlinkSync(looped_audio)
-			return audio_file
+			return output_path
 
 		// one video, one audio
 		} else if (
