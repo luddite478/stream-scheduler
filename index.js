@@ -422,7 +422,7 @@ async function update_playlists(pages_data, token) {
 
 		for (const pllst of playlists) {
 			console.log(pllst)
-			discord_send('Updating playlist(s):\n', pllst)
+			discord_send('Updating playlist(s):\n', JSON.stringify(pllst, null, 2))
 			await delete_ffplayout_playlist(pllst.date, token)
 			await save_ffplayout_playlist(pllst, token)
 	  	}
