@@ -25,8 +25,9 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 	        output_path
 	    ].filter(Boolean) 
 
-	    console.log(`\n*** Merging ${audio_file}\nand ${image_file}\nto ${output_path}`)
-
+	    const log_msg = `\n*** Merging ${audio_file}\nand ${image_file}\nto ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 
 		if (proc.status !== 0) {
@@ -70,8 +71,9 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 	        output_path
 	    ].filter(Boolean) 
 
-	    console.log(`\n*** Merging ${audio1_path}\nand ${video1_path}\nto ${output_path}`)
-    
+	    const log_msg = `\n*** Merging ${audio1_path}\nand ${video1_path}\nto ${output_path}`
+    	console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 
 		if (proc.status !== 0) {
@@ -105,7 +107,9 @@ function merge_audio(audio_files) {
 	        output_path
 	    ]
 
-	    console.log(`\n*** Merging aduio files ${audio_files}\noutput file: ${output_path}`)
+	    const log_msg = `\n*** Merging aduio files ${audio_files}\noutput file: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 		
 		if (proc.status !== 0) {
@@ -133,7 +137,9 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 	        output_path
 	    ]
 
-	    console.log(`\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`)
+	    const log_msg = `\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 
 		if (proc.status !== 0) {
@@ -176,7 +182,10 @@ function loop_audio(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-	    console.log(`\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`)
+
+	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 
@@ -216,7 +225,9 @@ function loop_video(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-	    console.log(`\n*** Looping ${input_path}\nNumber of loops: ${repeats_number} `)
+	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 		fs.unlinkSync(tmp_concat_file)
 
@@ -246,7 +257,9 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	        output_path
 	    ]
 
-	    console.log(`\n*** Merging audio ${audio_file} and color ${color}: ${output_path}`)
+	    const log_msg = `\n*** Merging audio ${audio_file} and color ${color}: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
 
 		if (proc.status !== 0) {

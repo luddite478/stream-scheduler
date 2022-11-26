@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { is_valid_state } = require('./validation')
 const { is_json_string } = require('../utils')
+const { discord_send } = require('../discord-bot')
 
 function save_pages_state(pages_data) {
 
@@ -27,6 +28,7 @@ function save_pages_state(pages_data) {
 
 	const json_new_state = JSON.stringify(new_state, null, 2)
 	console.log(`\nSaving state to ${STATE_FILE}...`)
+	discord_send('New state:\n', json_new_state)
 	fs.writeFileSync(STATE_FILE, json_new_state)
 }
 

@@ -403,6 +403,7 @@ async function get_pages_data() {
 
 async function process_pages_data(pages_data, modified_pages_ids) {
 	try {
+		discord_send('Modified pages ids: ', modified_pages_ids)
 		pages_data = await download_pages_media_if_not_exist(pages_data)
 		pages_data = set_pages_duration(pages_data)
 		pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
@@ -421,6 +422,7 @@ async function update_playlists(pages_data, token) {
 
 		for (const pllst of playlists) {
 			console.log(pllst)
+			discord_send('Updating playlist(s):\n', pllst)
 			await delete_ffplayout_playlist(pllst.date, token)
 			await save_ffplayout_playlist(pllst, token)
 	  	}
