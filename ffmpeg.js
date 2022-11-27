@@ -290,6 +290,7 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 		
 		const basename = path.basename(audio_file)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_blank_image]-' + basename)
+
 	    const args = [
 	        '-hide_banner',
 	        '-i', audio_file,
@@ -327,6 +328,12 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 			.sort((a, b) => 0.5 - Math.random())[0]
 		dflt_image = path.join('images/default', dflt_image)
 
+	    const codec = get_codec_name(audio)
+	    console.log('*****  CODEC', codec)
+		if (codec === 'aac') {
+			
+			return output_path
+		}
 
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
@@ -334,7 +341,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 	        // '-loop', '1',
 	        '-i', dflt_image,
 	        '-i', audio_file,
-	        // '-c:v', 'libx264', 
+	        '-c:v', 'libx264', 
 	        // '-tune', 'stillimage',
 	        '-acodec', 'copy',
 	        // '-shortest',
