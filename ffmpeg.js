@@ -327,20 +327,17 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 			.filter(file => file.includes(resolution))
 			.sort((a, b) => 0.5 - Math.random())[0]
 		dflt_image = path.join('images/default', dflt_image)
-
-	    const codec = get_codec_name(audio_file)
-	    console.log('*****  CODEC', codec)
-			
+		
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
 	        '-hide_banner',
-	        // '-loop', '1',
+	        '-loop', '1',
 	        '-i', dflt_image,
 	        '-i', audio_file,
 	        '-c:v', 'libx264', 
-	        // '-tune', 'stillimage',
+	        '-tune', 'stillimage',
 	        '-acodec', 'copy',
-	        // '-shortest',
+	        '-shortest',
 	       	'-y',
 	        output_path
 	    ]
@@ -349,6 +346,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
+		console.log(`\n${proc.stderr.toString()}`)
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)

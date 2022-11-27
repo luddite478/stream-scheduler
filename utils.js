@@ -28,13 +28,14 @@ function get_codec_name(file) {
 	    const args = [
 	    	'-v', '0',
 	    	'-select_streams', 'a',
-	    	'-show_entries', 'stream=codec_name:stream_tags=language',
+	    	'-show_entries', 'stream=codec_name',
 	    	'-of', 'default=nk=1:nw=1',
 	    	file
 	    ]
 
 		const proc = spawnSync('ffprobe', args)
-		return Number(proc.stdout.toString().trim())
+	
+		return proc.stdout.toString().trim()
 
 	} catch(e) {
 		console.log(`Can not get duration of the file ${file}:`, e)
