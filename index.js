@@ -209,11 +209,11 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			// const aac_audio = audio_reencode_aac(src_audio)
 			// const looped_audio = loop_audio(aac_audio, a_repeats)
 			params = { ...params, resolution }
-			const result_mp4 = merge_audio_and_image(src_audio, dflt_image, params, output_path)
+			merge_audio_and_image(src_audio, dflt_image, params, output_path)
+			const reencoded_video = reencode_video(output_path) 
 			fs.unlinkSync(src_audio)
-			// fs.unlinkSync(looped_audio)
-			fs.renameSync(result_mp4, output_path)
-			return result_mp4
+			fs.renameSync(reencoded_video, output_path)
+			return output_path
 
 		// one video, one audio
 		} else if (
