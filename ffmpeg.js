@@ -355,7 +355,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 		return output_path
 
 	} catch(e) {
-		console.log(`Can not add fade to ${input_path}, error: `, e)
+		console.log(`Can not merge ${audio_file} and iamge ${dflt_image}, error: `, e)
 	}
 }
 
