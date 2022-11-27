@@ -330,11 +330,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 
 	    const codec = get_codec_name(audio)
 	    console.log('*****  CODEC', codec)
-		if (codec === 'aac') {
 			
-			return output_path
-		}
-
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
 	        '-hide_banner',
@@ -362,7 +358,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 		return output_path
 
 	} catch(e) {
-		console.log(`Can not merge ${audio_file} and iamge ${dflt_image}, error: `, e)
+		console.log(`Can not merge audio and default image: `, e)
 	}
 }
 
