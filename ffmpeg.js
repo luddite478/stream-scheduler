@@ -293,7 +293,7 @@ function merge_audio_and_image(audio, image, params) {
 	        '-i', image,
 	        '-i', audio,
 	        '-c:v', 'libx264', 
-	        '-acodec', 'copy',
+	        '-acodec', 'aac',
 	        '-vf', 'loop=-1:1',
 	        '-pix_fmt', 'yuv420p',
 	        '-movflags', 'faststart',
