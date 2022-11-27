@@ -289,11 +289,10 @@ function merge_audio_and_image(audio, image, params) {
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
 	        '-hide_banner',
-	        '-framerate', '1/10',
 	        '-i', image,
 	        '-i', audio,
 	        '-c:v', 'libx264', 
-	        '-acodec', 'aac',
+	        '-acodec', 'copy',
 	        '-vf', 'loop=-1:1',
 	        '-pix_fmt', 'yuv420p',
 	        '-movflags', 'faststart',
