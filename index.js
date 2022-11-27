@@ -207,9 +207,9 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			dflt_image = path.join('images/default', dflt_image)
 
 			// const aac_audio = audio_reencode_aac(src_audio)
-			// const looped_audio = loop_audio(aac_audio, a_repeats)
+			const looped_audio = loop_audio(src_audio, a_repeats)
 			params = { ...params, resolution }
-			merge_audio_and_image(src_audio, dflt_image, params, output_path)
+			merge_audio_and_image(looped_audio, dflt_image, params, output_path)
 			const reencoded_video = reencode_video(output_path) 
 			fs.unlinkSync(src_audio)
 			fs.renameSync(reencoded_video, output_path)
