@@ -194,18 +194,26 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			audio_files.length === 1 && 
 		    video_files.length === 0) { 
 
+			const resolution = '1920x640'
 			const src_audio = audio_files[0].audio
 
 			const { repeats:   a_repeats, 
 				    remainder: a_remainder } = get_number_of_repeats_and_remainder(src_audio, params.duration)
 
+			let dflt_image = fs.readdirSync('images/default')
+				.filter(file => file.includes(resolution))
+				.sort((a, b) => 0.5 - Math.random())[0]
+
+			dflt_image = path.join('images/default', dflt_image)
+
 			const aac_audio = audio_reencode_aac(src_audio)
-			const looped_audio = loop_audio(aac_audio, a_repeats)
-			const result_mp4 = merge_audio_and_default_image(looped_audio)
+			// const looped_audio = loop_audio(aac_audio, a_repeats)
+			params = { ...params, resolution }
+			const result_mp4 = merge_audio_and_image(aac_audio, dflt_image, params, output_path)
 			fs.unlinkSync(aac_audio)
-			fs.unlinkSync(looped_audio)
+			// fs.unlinkSync(looped_audio)
 			fs.renameSync(result_mp4, output_path)
-			return output_path
+			return result_mp4
 
 		// one video, one audio
 		} else if (
@@ -413,7 +421,7 @@ async function get_pages_data() {
 		}
 
 		return filter_pages_data(pages_data)
-		
+
 	} catch (e) {
 		console.log('Error (get_pages_data):\n', e.message)
 		discord_send('Error (get_pages_data):\n', e.message)

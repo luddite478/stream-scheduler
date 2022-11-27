@@ -2,46 +2,7 @@ const { spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const { discord_send } = require('./discord-bot')
-const { get_codec_name } = require('./utils')
-
-function merge_audio_and_image(audio_file, image_file, params, output_path) {
-
-	try {
-		let duration = ''
-		if (params.duration) {
-			duration =  `-t ${params.duration}` // TODO: add validation
-		} else {
-			shortest = '-shortest'
-		}
-
-	    const args = [
-	        '-hide_banner',
-	        '-i', image_file,
-	        '-i', audio_file,
-	        '-c:v', 'libx264',
-	        '-tune', 'stillimage',
-	        '-pix_fmt', 'yuv420p',
-	       	duration,
-	       	'-y',
-	        output_path
-	    ].filter(Boolean) 
-
-	    const log_msg = `\n*** Merging ${audio_file}\nand ${image_file}\nto ${output_path}`
-	    console.log(log_msg)
-	    discord_send(log_msg)
-		const proc = spawnSync('ffmpeg', args)
-
-		if (proc.status !== 0) {
-			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`Error (merge_audio_and_image):\n${proc.stderr.toString()}`)
-		}
-
-		return output_path
-
-	} catch(e) {
-		console.log(`Can not merge ${audio_file} and ${image_file}, error: `, e)
-	}
-}
+const { get_codec_name, get_duration } = require('./utils')
 
 function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 	try {
@@ -319,38 +280,36 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	}
 }
 
-function merge_audio_and_default_image(audio_file, resolution='1920x640') {
+function merge_audio_and_image(audio, image, params) {
 	try {
 		
-		const { name } = path.parse(audio_file)
-		let dflt_image = fs.readdirSync('images/default')
-			.filter(file => file.includes(resolution))
-			.sort((a, b) => 0.5 - Math.random())[0]
-		dflt_image = path.join('images/default', dflt_image)
-		
+		const { name } = path.parse(audio)
+		const { duration, resolution } = params
+
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
 	        '-hide_banner',
-	        '-loop', '1',
-	        '-i', dflt_image,
-	        '-i', audio_file,
+	        '-framerate', '1/10',
+	        '-i', image,
+	        '-i', audio,
 	        '-c:v', 'libx264', 
-	        '-tune', 'stillimage',
 	        '-acodec', 'copy',
-	        '-shortest',
+	        '-vf', 'loop=-1:1',
+	        '-pix_fmt', 'yuv420p',
+	        '-movflags', 'faststart',
+	        '-t', duration,
 	       	'-y',
 	        output_path
 	    ]
 
-	    const log_msg = `\n*** Merging audio ${audio_file}\nand default image ${dflt_image}\noutput: ${output_path}`
+	    const log_msg = `\n*** Merging audio ${audio}\nand default image ${image}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
-		console.log(`\n${proc.stderr.toString()}`)
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`Error (merge_audio_and_default_image):\n${proc.stderr.toString()}`)
+			discord_send(`Error (merge_audio_and_image):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
@@ -394,7 +353,6 @@ module.exports = {
 	merge_audio_and_video,
 	merge_audio_and_image,
 	merge_audio_and_color_image,
-	merge_audio_and_default_image,
 	merge_audio,
 	audio_reencode_aac,
 	fadein_fadeout_audio,
