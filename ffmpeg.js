@@ -209,7 +209,7 @@ function audio_reencode_aac(audio) {
 		const { name } = path.parse(audio)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, `[aac]-` + name + '.aac')
 
-	    const log_msg = `\n*** Reencoding audio ${audio} to aac\noutput: ${output_path}}`
+	    const log_msg = `\n*** Reencoding audio ${audio} to aac\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 
@@ -336,7 +336,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 	        '-i', audio_file,
 	        '-c:v', 'libx264', 
 	        '-tune', 'stillimage',
-	        '-acodec', 'aac',
+	        '-acodec', 'copy',
 	        '-shortest',
 	       	'-y',
 	        output_path
