@@ -210,7 +210,7 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			// const looped_audio = loop_audio(aac_audio, a_repeats)
 			params = { ...params, resolution }
 			const result_mp4 = merge_audio_and_image(src_audio, dflt_image, params, output_path)
-			fs.unlinkSync(aac_audio)
+			fs.unlinkSync(src_audio)
 			// fs.unlinkSync(looped_audio)
 			fs.renameSync(result_mp4, output_path)
 			return result_mp4
