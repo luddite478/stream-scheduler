@@ -328,7 +328,7 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 			.sort((a, b) => 0.5 - Math.random())[0]
 		dflt_image = path.join('images/default', dflt_image)
 
-	    const codec = get_codec_name(audio)
+	    const codec = get_codec_name(audio_file)
 	    console.log('*****  CODEC', codec)
 			
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
