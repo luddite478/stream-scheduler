@@ -331,13 +331,13 @@ function merge_audio_and_default_image(audio_file, resolution='1920x640') {
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
 	    const args = [
 	        '-hide_banner',
-	        '-loop', '1',
+	        // '-loop', '1',
 	        '-i', dflt_image,
 	        '-i', audio_file,
-	        '-c:v', 'libx264', 
-	        '-tune', 'stillimage',
+	        // '-c:v', 'libx264', 
+	        // '-tune', 'stillimage',
 	        '-acodec', 'copy',
-	        '-shortest',
+	        // '-shortest',
 	       	'-y',
 	        output_path
 	    ]
