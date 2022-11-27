@@ -2,6 +2,7 @@ const { spawnSync } = require('child_process')
 const path = require('path')
 const fs = require('fs')
 const { discord_send } = require('./discord-bot')
+const { get_codec_name } = require('./utils')
 
 function merge_audio_and_image(audio_file, image_file, params, output_path) {
 
@@ -38,7 +39,7 @@ function merge_audio_and_image(audio_file, image_file, params, output_path) {
 		return output_path
 
 	} catch(e) {
-		console.log(`Can not merge ${audio1_path} and ${video1_path}, error: `, e)
+		console.log(`Can not merge ${audio_file} and ${image_file}, error: `, e)
 	}
 }
 
@@ -201,6 +202,47 @@ function loop_audio(input_path, repeats_number) {
 	}
 }
 
+function audio_reencode_aac(audio) {
+	try {
+
+		// apply micro fadein/fadeout
+		const { name } = path.parse(audio)
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, `[aac]-` + name + '.aac')
+
+	    const log_msg = `\n*** Reencoding audio ${audio} to aac\noutput: ${output_path}}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+
+	    // Check if already aac 
+	    const codec = get_codec_name(audio)
+		if (codec === 'aac') {
+			fs.renameSync(audio, output_path)
+			return output_path
+		}
+
+	    const args = [
+	        '-hide_banner',
+	        '-i', audio,
+	        '-c', 'aac',
+	       	'-y',
+	        `${output_path}`
+	    ]
+
+		const proc = spawnSync('ffmpeg', args)
+		fs.unlinkSync(audio)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (audio_reencode_aac):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not reencode audio ${audio} to aac, error: `, e)
+	}
+}
+
 function loop_video(input_path, repeats_number) {
 	try {
 		// create txt file fo concatenation
@@ -276,6 +318,47 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	}
 }
 
+function merge_audio_and_default_image(audio_file, resolution='1920x640') {
+	try {
+		
+		const { name } = path.parse(audio_file)
+		let dflt_image = fs.readdirSync('images/default')
+			.filter(file => file.includes(resolution))
+			.sort((a, b) => 0.5 - Math.random())[0]
+		dflt_image = path.join('images/default', dflt_image)
+
+
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[audio_dflt_image]-' + name + '.mp4')
+	    const args = [
+	        '-hide_banner',
+	        '-loop', '1',
+	        '-i', dflt_image,
+	        '-i', audio_file,
+	        '-c:v', 'libx264', 
+	        '-tune', 'stillimage',
+	        '-acodec', 'aac',
+	        '-shortest',
+	       	'-y',
+	        output_path
+	    ]
+
+	    const log_msg = `\n*** Merging audio ${audio_file}\nand default image ${dflt_image}\noutput: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (merge_audio_and_default_image):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not add fade to ${input_path}, error: `, e)
+	}
+}
+
 function reencode_video(input_path) {
 	try {
 		
@@ -310,7 +393,9 @@ module.exports = {
 	merge_audio_and_video,
 	merge_audio_and_image,
 	merge_audio_and_color_image,
+	merge_audio_and_default_image,
 	merge_audio,
+	audio_reencode_aac,
 	fadein_fadeout_audio,
 	loop_audio,
 	reencode_video,

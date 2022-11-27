@@ -18,10 +18,12 @@ const { save_pages_state, get_modified_pages_ids, get_state } = require('./state
 const { merge_audio_and_video, 
 		merge_audio_and_image,
 		merge_audio_and_color_image,
+		merge_audio_and_default_image,
 		merge_audio, 
 		loop_audio, 
 		loop_video,
-		reencode_video } = require('./ffmpeg')
+		reencode_video,
+		audio_reencode_aac } = require('./ffmpeg')
 
 const { download_file, 
 		is_json_string, 
@@ -197,10 +199,12 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const { repeats:   a_repeats, 
 				    remainder: a_remainder } = get_number_of_repeats_and_remainder(src_audio, params.duration)
 
-			const looped_audio = loop_audio(src_audio, a_repeats)
-			const result_mp4 = merge_audio_and_color_image(looped_audio)
-			fs.renameSync(result_mp4, output_path)
+			const aac_audio = audio_reencode_aac(src_audio)
+			const looped_audio = loop_audio(aac_audio, a_repeats)
+			const result_mp4 = merge_audio_and_default_image(looped_audio)
+			fs.unlinkSync(aac_audio)
 			fs.unlinkSync(looped_audio)
+			fs.renameSync(result_mp4, output_path)
 			return output_path
 
 		// one video, one audio
@@ -251,13 +255,17 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			fs.unlinkSync(video_file)
 			return result_mp4
 
+		// multiple audio, one image
 		} else if (audio_files.length > 0 && 
-			       video_files.length > 0 && 
+			       video_files.length === 1 && 
 			       video_files[0].hasOwnProperty('image')) {
 
-			console.log(`Merging ${audio_files[0].audio} and ${video_files[0].video}`)
+			const src_image = video_files[0].image
+			const src_audio = audio_files[0].audio
 
-			output_path = merge_audio_and_image(audio_files[0].audio, video_files[0].image, params, output_path)
+			console.log(`Merging ${src_audio} and ${src_image}`)
+
+			output_path = merge_audio_and_image(src_audio, src_image, params, output_path)
 	
 		} else if (audio_files.length === 0 && 
 			       video_files.length > 0) {
@@ -393,9 +401,19 @@ function filter_outdated_pages(pages_data) {
 
 async function get_pages_data() {
 	try {
+
 		const pages_meta = await get_playlist_pages_meta()
+		if (!pages_meta) {
+			return
+		}
+
 		const pages_data = await get_playlist_pages_data(pages_meta)	
+		if (!pages_data) {
+			return
+		}
+
 		return filter_pages_data(pages_data)
+		
 	} catch (e) {
 		console.log('Error (get_pages_data):\n', e.message)
 		discord_send('Error (get_pages_data):\n', e.message)
@@ -404,7 +422,7 @@ async function get_pages_data() {
 
 async function process_pages_data(pages_data, modified_pages_ids) {
 	try {
-		discord_send('Modified pages ids: ', modified_pages_ids.join(', '))
+		discord_send(`Modified pages ids: ${modified_pages_ids}`)
 		pages_data = await download_pages_media_if_not_exist(pages_data)
 		pages_data = set_pages_duration(pages_data)
 		pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59

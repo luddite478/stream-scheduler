@@ -22,6 +22,25 @@ function get_duration(file) {
 	}
 }
 
+function get_codec_name(file) {
+	try {
+
+	    const args = [
+	    	'-v', '0',
+	    	'-select_streams', 'a',
+	    	'-show_entries', 'stream=codec_name:stream_tags=language',
+	    	'-of', 'default=nk=1:nw=1',
+	    	file
+	    ]
+
+		const proc = spawnSync('ffprobe', args)
+		return Number(proc.stdout.toString().trim())
+
+	} catch(e) {
+		console.log(`Can not get duration of the file ${file}:`, e)
+	}
+}
+
 async function download_file(fileUrl, outputLocationPath) {
  	const writer = fs.createWriteStream(outputLocationPath)
 
@@ -73,5 +92,6 @@ module.exports = {
 	get_duration,
 	download_file,
 	is_json_string,
-	get_time_interval_sec
+	get_time_interval_sec,
+	get_codec_name
 }

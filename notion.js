@@ -20,6 +20,7 @@ async function get_playlist_pages_meta() {
 
 	} catch(e) {
 		console.log(e)
+		return null
 	}
 }
 
@@ -34,6 +35,7 @@ async function get_page_contents(id) {
 
 	} catch(e) {
 		console.log(e)
+		return null
 	}
 }
 
@@ -48,6 +50,7 @@ async function get_page(id) {
 
 	} catch(e) {
 		console.log(e)
+		return null
 	}
 }
 
@@ -66,6 +69,7 @@ async function set_page_play_time(id, date) {
 
 	} catch(e) {
 		console.log(e)
+		return null
 	}
 }
 
@@ -73,6 +77,13 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 	try {
 		return await Promise.all(
 			playlist_pages_meta.map(async (page_meta) => {
+
+				const contents = await get_page_contents(page_meta.id)
+				
+				if (!contents) {
+					throw new Error('Can not get contents')
+				}
+
 				return { 
 					meta: { 
 						id:	page_meta.id,
@@ -81,12 +92,13 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 						last_edited_time: page_meta.last_edited_time,
 						tags: page_meta.properties['tags'].multi_select.map(t=>t.name)
 					},
-					contents: await get_page_contents(page_meta.id)
+					contents 
 				}
 			})
 		)
 	} catch(e) {
 		console.log('get_playlist_pages_data error:', e)
+		return null
 	}
 }
 
