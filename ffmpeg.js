@@ -358,7 +358,7 @@ function video_to_target_duration(video, duration) {
 	        '-i', video,
 	       	'-y',
 	       	'-c', 'copy',
-	       	'-t', duration
+	       	'-t', duration,
 	        output_path
 	    ]
 
