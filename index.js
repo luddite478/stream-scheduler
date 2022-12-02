@@ -213,7 +213,6 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			params = { ...params, resolution }
 			merge_audio_and_video(looped_audio, video, params, output_path)
 			fs.unlinkSync(looped_audio)
-			fs.unlinkSync(src_audio)
 			fs.unlinkSync(video)
 			
 			return output_path
