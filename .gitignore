@@ -1,6 +1,5 @@
 node_modules/
 .env
-*.mp4
 *.wav
 tmp
 ffmpeg_std*
@@ -15,3 +14,4 @@ tv-media
 state/state.json
 placeholder
 prod-ffplayout.yml
+Dockerfile

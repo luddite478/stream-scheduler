@@ -347,6 +347,38 @@ function reencode_video(input_path) {
 	}
 }
 
+function video_to_target_duration(video, duration) {
+	try {
+		
+		const basename = path.basename(video)
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
+	    const args = [
+	        '-hide_banner',
+	        '-stream_loop', '-1',
+	        '-i', video,
+	       	'-y',
+	       	'-c', 'copy',
+	       	'-t', duration
+	        output_path
+	    ]
+
+	    const log_msg = `\n*** Cut/extend video ${video} to target duration ${duration}\noutput: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (reencode_video):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not add fade to ${input_path}, error: `, e)
+	}
+}
+
 
 module.exports = {
 	merge_audio_and_video,
@@ -357,5 +389,6 @@ module.exports = {
 	fadein_fadeout_audio,
 	loop_audio,
 	reencode_video,
-	loop_video
+	loop_video,
+	video_to_target_duration
 }
