@@ -160,13 +160,32 @@ async function download_pages_media_if_not_exist(playlist_pages_data) {
 
 function get_number_of_repeats_and_remainder(file, target_duration) {
 	const file_duration = get_duration(file)
+
+	if (target_duration < 1) {
+		const log_msg = `
+		\n*** Calculating repeats number to match target duration for file:\n${file}
+		Target duration is less than 1 second (${target_duration}) 
+		file duration: ${file_duration}
+		repeats: 1
+		remainder: 0
+		`
+		console.log(log_msg)
+		discord_send(log_msg)
+		return { repeats: 1, remainder: 0 }
+	}
+	
 	const repeats = Math.floor(target_duration/file_duration)
 	const remainder = target_duration % file_duration
-	console.log('\n*** Calculating repeats number to match target duration for file:\n',file)
-	console.log('target duration:', target_duration)
-	console.log('file duration:', file_duration)
-	console.log('repeats:', repeats)
-	console.log('remainder:', remainder)
+
+	const log_msg = `
+	\n*** Calculating repeats number to match target duration for file:\n${file}
+	target duration: ${target_duration}
+	file duration: ${file_duration}
+	repeats: ${repeats}
+	remainder: ${remainder}
+	`
+	console.log(log_msg)
+	discord_send(log_msg)
 	return { repeats, remainder }
 }
 
