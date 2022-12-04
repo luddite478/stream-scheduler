@@ -89,8 +89,8 @@ function get_modified_pages_ids(pages_data) {
 			const cashed_pages = JSON.parse(state_file).pages
 
 			// get modified pages
-			cashed_pages.forEach(page => {
-				pages_data.forEach(c_page => {
+			pages_data.forEach(page => {
+				cashed_pages.forEach(c_page => {					
 					if (page.meta.id === c_page.meta.id &&
 						page.meta.last_edited_time !== c_page.meta.last_edited_time) {			
 						modified_pages_ids.push(page.meta.id)
@@ -100,13 +100,13 @@ function get_modified_pages_ids(pages_data) {
 
 			// get new pages
 			const cashed_pages_ids = cashed_pages.map(page => page.meta.id)
+
 			const new_pages_ids = []
 			pages_data.forEach(page => {
 				if (!cashed_pages_ids.find(id => id === page.meta.id)){
-					return page.meta.id
+					new_pages_ids.push(page.meta.id)
 				}
 			})
-
 			if (new_pages_ids) {
 				modified_pages_ids = modified_pages_ids.concat(new_pages_ids)
 			}

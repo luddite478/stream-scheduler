@@ -502,12 +502,12 @@ async function main() {
 
 	// 4. Get modified pages ids
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
-
+	console.log('modified_pages_ids',modified_pages_ids)
 	if (!modified_pages_ids.length) {
 		await new Promise(r => setTimeout(r, 5000))
 		return main() 
 	}
-
+	
 	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
 	// 5. Process and merge media files on each page to one mp4 file
