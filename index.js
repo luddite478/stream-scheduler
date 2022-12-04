@@ -502,26 +502,25 @@ async function main() {
 
 	// 4. Get modified pages ids
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
-	console.log('modified_pages_ids',modified_pages_ids)
 	if (!modified_pages_ids.length) {
 		await new Promise(r => setTimeout(r, 5000))
 		return main() 
 	}
-	
+
 	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
 	// 5. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
-
+	console.log('new_pages_data', new_pages_data)
 	// 6. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
 	await reset_player_state(token)	
 
-	// 6. Save program state as json
+	// 7. Save program state as json
 	save_pages_state(new_pages_data)
 
-	// 7. Sleep 5 sec
+	// 8. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000))
 
 	// 8. Repeat
