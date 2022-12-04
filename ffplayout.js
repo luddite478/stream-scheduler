@@ -185,9 +185,8 @@ function set_in_out_time(pages_data) {
 
 function add_placeholders(date, pages_data) {
 	const { PLACEHOLDER_PATH } = process.env
-	const pages_with_placeholders = []
+	let pages_with_placeholders = []
 
-	// let next_start
 	let prev_end = 0
 	const day_start  = new Date(date)
 	day_start.setTime(day_start.getTime() + (6-4)*60*60*1000) // +6 playlist -4 UTC
@@ -205,8 +204,9 @@ function add_placeholders(date, pages_data) {
 		}
 
 		if (duration > 0) {
-			pages_with_placeholders.push(placeholder, page)
+			pages_with_placeholders = pages_with_placeholders.concat(placeholder)
 		}
+		pages_with_placeholders = pages_with_placeholders.concat(page)
 			
 		if ((i+1) < pages_data.length) {
 			prev_end = placeholder.meta.play_time.duration + page.meta.play_time.duration
@@ -229,7 +229,6 @@ function add_placeholders(date, pages_data) {
 			mp4: PLACEHOLDER_PATH
 		})
 	}
-
 	return pages_with_placeholders
 }
 
