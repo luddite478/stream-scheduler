@@ -82,7 +82,7 @@ function get_modified_pages_ids(pages_data) {
 
 				modified_pages_ids = pages_data.map(page => page.meta.id)
 				console.log('\nget_modified_pages_ids: state is empty or not valid')
-				console.log('\nModified pages ids:', modified_pages_ids)
+				// console.log('\nModified pages ids:', modified_pages_ids)
 				return modified_pages_ids
 			}
 
@@ -116,7 +116,7 @@ function get_modified_pages_ids(pages_data) {
 			modified_pages_ids = pages_data.map(page => page.meta.id)
 		}
 
-		console.log('\nModified pages ids:', modified_pages_ids)
+		// console.log('\nModified pages ids:', modified_pages_ids)
 
 		return modified_pages_ids
 

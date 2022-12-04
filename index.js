@@ -449,13 +449,16 @@ async function get_pages_data() {
 	}
 }
 
+function handle_pages_time_data(pages_data) {
+	pages_data = set_pages_duration(pages_data)
+	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
+	return filter_outdated_pages(pages_data)
+}
+
 async function process_pages_data(pages_data, modified_pages_ids) {
 	try {
 		discord_send(`Modified pages ids: ${modified_pages_ids}`)
 		pages_data = await download_pages_media_if_not_exist(pages_data)
-		pages_data = set_pages_duration(pages_data)
-		pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
-		pages_data = filter_outdated_pages(pages_data)
 		return generate_mp4s(pages_data, modified_pages_ids)
 	} catch (e) {
 		console.log('Error (process_pages_data):\n', e.message)
@@ -482,29 +485,35 @@ async function update_playlists(pages_data, token) {
 
 async function main() {
 
-	// 3. Show current state
+	// 1. Show current state
 	const state = get_state()
 	console.log(`State:\n${JSON.stringify(state, null, 2)}`)
 	
-
-	// 1. Get data from Notion pages
+	// 2. Get data from Notion pages
 	let pages_data = await get_pages_data()
 
-	// 2. Get modified pages ids
+	// 3. Handle time data
+	pages_data = handle_pages_time_data(pages_data)
+
+	if (!pages_data.length) {
+		await new Promise(r => setTimeout(r, 5000))
+		return main() 
+	}
+
+	// 4. Get modified pages ids
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
 
 	if (!modified_pages_ids.length) {
 		await new Promise(r => setTimeout(r, 5000))
-		main()
-		return 
+		return main() 
 	}
 
 	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
-	// 4. Process and merge media files on each page to one mp4 file
+	// 5. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
 
-	// 5. Update ffplayout playlist
+	// 6. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
 	await reset_player_state(token)	
