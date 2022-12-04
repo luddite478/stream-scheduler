@@ -325,7 +325,7 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 			return changed_pages_ids.find(id => page.meta.id === id)
 		})
 
-		return pages_to_process.map((page) => {
+		pages_to_process.forEach((page) => {
 
 			const audio_files = []
 			const video_files = []
@@ -348,7 +348,11 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 			})
 
 			merge_page_media_files(audio_files, video_files, params, output_path)
-			
+		})
+
+		// append mp4 paths to pages
+		return pages_data.map(page => {
+			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, page.meta.id + '.mp4')
 			return {
 				...page,
 				mp4: output_path
