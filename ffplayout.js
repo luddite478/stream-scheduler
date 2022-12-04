@@ -276,6 +276,7 @@ function generate_playlists(pages_data) {
 			channel: '1'
 		}
 	})
+
 	return playlists
 }
 

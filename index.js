@@ -515,7 +515,6 @@ async function main() {
 
 	// 5. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
-	console.log('new_pages_data', new_pages_data)
 	// 6. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
