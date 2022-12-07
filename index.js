@@ -86,7 +86,9 @@ function filter_pages_data(playlist_pages_data) {
 		return a
 
 	} catch(e) {
-		console.log('filter_pages_data error:', e)
+		const log_msg = `filter_pages_data error:: ${e.message}`
+		discord_send(log_msg)
+		console.log(log_msg)
 	}
 }
 
@@ -154,7 +156,9 @@ async function download_pages_media_if_not_exist(playlist_pages_data) {
 		})
 		
 	} catch(e) {
-		console.log('Error while downloading Notion files: ', e)
+		const log_msg = `Error while downloading Notion files: ${e.message}`
+		discord_send(log_msg)
+		console.log(log_msg)
 	}
 }
 
