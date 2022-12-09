@@ -43,7 +43,8 @@ const { get_playlist_pages_meta,
 		get_page_contents,
 		get_page,
 		set_page_play_time,
-		get_playlist_pages_data } = require('./notion')
+		get_playlist_pages_data,
+		filter_out_not_ready_pages } = require('./notion')
 
 
 const is_accepted_media_type = (type) =>  {
@@ -445,7 +446,12 @@ function filter_outdated_pages(pages_data) {
 async function get_pages_data() {
 	try {
 
-		const pages_meta = await get_playlist_pages_meta()
+		let pages_meta = await get_playlist_pages_meta()
+		if (!pages_meta) {
+			return null
+		}
+
+		pages_meta = filter_out_not_ready_pages(pages_meta)
 		if (!pages_meta) {
 			return null
 		}

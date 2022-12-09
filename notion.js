@@ -73,6 +73,12 @@ async function set_page_play_time(id, date) {
 	}
 }
 
+function filter_out_not_ready_pages(pages) {
+	return  pages.filter((page_meta) => {
+		return page_meta.properties['ready'].checkbox
+	})
+}
+
 async function get_playlist_pages_data(playlist_pages_meta) {
 	try {
 		return await Promise.all(
@@ -103,6 +109,7 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 }
 
 module.exports = {
+	filter_out_not_ready_pages,
 	get_playlist_pages_meta,
 	get_page_contents,
 	get_page,
