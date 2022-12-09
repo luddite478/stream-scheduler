@@ -205,7 +205,7 @@ function add_placeholders(date, pages_data) {
 
 		if (duration > 0) {
 			pages_with_placeholders = pages_with_placeholders.concat(placeholder)
-		}
+		} 
 		pages_with_placeholders = pages_with_placeholders.concat(page)
 			
 		if ((i+1) < pages_data.length) {

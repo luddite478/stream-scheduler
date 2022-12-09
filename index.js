@@ -248,16 +248,22 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 
 			const src_audio = audio_files[0].audio
 			const src_video = video_files[0].video
-			// loop to match duration
+
+			const aac_audio = audio_reencode_aac(src_audio)
 			const { repeats:   a_repeats, 
-				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(src_audio, params.duration)
+				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(aac_audio, params.duration)
 			const { repeats:   v_repeats, 
 				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
-			const audio_file = loop_audio(src_audio, a_repeats)
+
+			// loop to match duration	    
+			const audio_file = loop_audio(aac_audio, a_repeats)
 			const video_file = loop_video(src_video, v_repeats)
 			// merge to mp4
 			const result_mp4 = merge_audio_and_video(audio_file, video_file, params, output_path)
 			// delete intermediate files
+			fs.unlinkSync(src_audio)
+			fs.unlinkSync(src_video)
+			fs.unlinkSync(aac_audio)
 			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
 			return result_mp4
