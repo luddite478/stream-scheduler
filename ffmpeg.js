@@ -190,7 +190,6 @@ function audio_reencode_aac(audio) {
 	    ]
 
 		const proc = spawnSync('ffmpeg', args)
-		fs.unlinkSync(audio)
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
