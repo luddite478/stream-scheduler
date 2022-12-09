@@ -441,12 +441,12 @@ async function get_pages_data() {
 
 		const pages_meta = await get_playlist_pages_meta()
 		if (!pages_meta) {
-			return
+			return null
 		}
 
 		const pages_data = await get_playlist_pages_data(pages_meta)	
 		if (!pages_data) {
-			return
+			return null
 		}
 
 		return filter_pages_data(pages_data)
@@ -454,6 +454,7 @@ async function get_pages_data() {
 	} catch (e) {
 		console.log('Error (get_pages_data):\n', e.message)
 		discord_send('Error (get_pages_data):\n', e.message)
+		return null
 	}
 }
 
@@ -499,6 +500,11 @@ async function main() {
 	
 	// 2. Get data from Notion pages
 	let pages_data = await get_pages_data()
+
+	if (!pages_data) {
+		await new Promise(r => setTimeout(r, 5000))
+		return main() 
+	}
 
 	// 3. Handle time data
 	pages_data = handle_pages_time_data(pages_data)
