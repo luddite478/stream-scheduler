@@ -1,0 +1,213 @@
+- name: Basic server setup
+  hosts: virtualmachines
+  become: true
+  become_user: root
+
+  vars:
+    - unix_username: luddite478
+
+  vars_prompt:
+    - name: unix_password
+      prompt: Unix password?
+      private: true
+
+  tasks:
+
+    - name: Update apt repo and cache on all Debian/Ubuntu boxes
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
+
+    - name: Create a unix user
+      user:
+        name: "{{ unix_username }}"
+        password: "{{ unix_password | password_hash('sha512') }}"
+        groups:
+         - sudo
+        state: present
+        shell: /bin/bash       
+        createhome: yes        
+        home: "/home/{{ unix_username }}"
+
+
+
+- name: Install ffplayout
+  hosts: virtualmachines
+  become: true
+  become_user: root 
+
+  vars:
+    ffplayout_url_path: https://github.com/ffplayout/ffplayout/releases/download/v0.16.5
+    ffplayout_file_name: ffplayout_0.16.5_amd64.deb
+    ffplayout_folder_1: /usr/share/ffplayout/
+    ffplayout_folder_2: /var/lib/ffplayout/
+    ffplayout_folder_3: /usr/share/ffplayout/public/live/
+
+  tasks:
+
+    - name: Download ffplayout
+      ansible.builtin.get_url:
+        url: "{{ ffplayout_url_path }}/{{ ffplayout_file_name }}"
+        dest: "/tmp/{{ ffplayout_file_name }}"
+        mode: '0700'
+
+    - name: Install deb
+      apt:
+        deb: "/tmp/{{ ffplayout_file_name }}"
+
+    - name: Changing perm of ffplayout folder 1
+      file:
+        path: "{{ ffplayout_folder_1 }}"
+        state: directory
+        mode: 0777
+
+    - name: Changing perm of ffplayout folder 2
+      file:
+        path: "{{ ffplayout_folder_2 }}"
+        state: directory
+        mode: 0777
+
+    - name: Changing perm of ffplayout folder 3
+      file:
+        path: "{{ ffplayout_folder_3 }}"
+        state: directory
+        mode: 0777
+
+    - name: Set timezone to Asia/Baku
+      community.general.timezone:
+        name: Asia/Baku
+
+    - name: Enable ffplayout service
+      ansible.builtin.systemd:
+        name: ffplayout
+        enabled: yes
+
+    - name: Enable ffpapi service
+      ansible.builtin.systemd:
+        name: ffpapi
+        enabled: yes
+
+        
+  
+- name: Install ffmpeg
+  hosts: virtualmachines
+  become: true
+  become_user: root
+
+  vars:
+    source_dir: "/usr/local/src"
+    lib_dir: "/usr/local/lib"
+    bin_dir: "/usr/local/bin"
+
+  # tasks:
+
+  #   - apt: update_cache=yes cache_valid_time=3600
+
+  #   - name: install dependencies
+  #     action: apt pkg={{ item }} state=present
+  #     with_items:
+  #       - git-core
+  #       - autoconf 
+  #       - automake 
+  #       - build-essential 
+  #       - libass-dev 
+  #       - libgpac-dev
+  #       - libtheora-dev 
+  #       - libtool 
+  #       - libvorbis-dev 
+  #       - pkg-config 
+  #       - texi2html 
+  #       - zlib1g-dev
+  #       - libmp3lame-dev
+  #       - yasm
+  #       - nasm
+  #       - libx264-dev
+  #       - libvpx-dev
+  #       - libopus-dev
+  #       - libx265-dev 
+  #       - libnuma-dev
+
+  #   - name: clone latest fdk-aac
+  #     git: repo=https://github.com/mstorsjo/fdk-aac.git
+  #          dest={{ source_dir }}/fdk-aac
+  #          accept_hostkey=yes
+
+  #   - name: clone latest ffmpeg
+  #     git: repo=https://github.com/FFmpeg/FFmpeg.git
+  #          dest={{ source_dir }}/ffmpeg
+  #          accept_hostkey=yes
+
+  #   - name: clone latest opus
+  #     git: repo=https://gitlab.xiph.org/xiph/opus.git
+  #          dest={{ source_dir }}/opus
+  #          accept_hostkey=yes
+
+  #   - name: compile fdk-aac
+  #     command: "{{ item }}" 
+  #     args:
+  #       chdir: "{{ source_dir }}/fdk-aac" 
+  #       creates: "{{ lib_dir }}/libfdk-aac.a"
+  #     with_items:
+  #       - autoreconf -fiv
+  #       - ./configure --disable-shared
+  #       - make
+  #       - make install
+  #       - make distclean
+
+  #   - name: compile ffmpeg
+  #     command: "{{ item }}" 
+  #     args:
+  #       chdir: "{{ source_dir }}/ffmpeg" 
+  #       creates: "{{ bin_dir }}/ffmpeg"
+  #     with_items:
+  #       - ./configure --bindir={{ bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree
+  #       - make
+  #       - make install
+  #       - make distclean
+
+
+- name: Install Node.js
+  hosts: virtualmachines
+  become: true
+  become_user: root
+
+  vars:
+    NODEJS_VERSION: 18
+    ansible_distribution_release: "focal"
+  tasks:
+    - name: Install the gpg key for nodejs LTS
+      apt_key:
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+        state: present
+
+    - name: Install the nodejs LTS repos
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_{{ NODEJS_VERSION }}.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+
+    - name: Install NodeJS
+      tags: nodesjs, install
+      apt:
+        name: nodejs
+        state: latest
+
+
+- name: Install stream-scheduler
+  hosts: virtualmachines
+  become: true
+  become_user: root
+
+  vars:
+    - unix_username: luddite478
+
+  tasks:
+    - name: Clone latest stream-scheduler
+      git: repo=https://github.com/luddite478/stream-scheduler.git
+           dest=home/{{ unix_username }}
+           accept_hostkey=yes
+
+    - name: Install packages based on package.json.
+      community.general.npm:
+        path: home/{{ unix_username }}/stream-scheduler
