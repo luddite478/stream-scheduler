@@ -4,6 +4,7 @@ const axios = require('axios')
 const URL = require('url')
 const path = require('path')
 const moment = require('moment')
+const findRemoveSync = require('find-remove')
 const momentDurationFormatSetup = require("moment-duration-format")
 momentDurationFormatSetup(moment)
 
@@ -504,13 +505,27 @@ async function update_playlists(pages_data, token) {
 	}
 }
 
+function delete_tmp_data_older_than(time) {
+	const tmp_dir = path.join(process.env.TMP_MEDIA_FOLDER)
+	findRemoveSync(tmp_dir, {age: {seconds: time}})
+}
+
+function delete_page_data_older_than(time) {
+	const tmp_dir = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER)
+	findRemoveSync(tmp_dir, {age: {seconds: time}})
+}
+
 async function main() {
 
 	// 1. Show current state
 	const state = get_state()
 	console.log(`State:\n${JSON.stringify(state, null, 2)}`)
+
+	// 2. Delete data older than 
+	delete_tmp_data_older_than(3600)
+	delete_page_data_older_than(3600*24)
 	
-	// 2. Get data from Notion pages
+	// 3. Get data from Notion pages
 	let pages_data = await get_pages_data()
 
 	if (!pages_data) {
@@ -518,7 +533,7 @@ async function main() {
 		return main() 
 	}
 
-	// 3. Handle time data
+	// 4. Handle time data
 	pages_data = handle_pages_time_data(pages_data)
 
 	if (!pages_data.length) {
@@ -526,7 +541,7 @@ async function main() {
 		return main() 
 	}
 
-	// 4. Get modified pages ids
+	// 5. Get modified pages ids
 	const modified_pages_ids = get_modified_pages_ids(pages_data)
 	if (!modified_pages_ids.length) {
 		await new Promise(r => setTimeout(r, 5000))
@@ -535,20 +550,20 @@ async function main() {
 
 	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
-	// 5. Process and merge media files on each page to one mp4 file
+	// 6. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
-	// 6. Update ffplayout playlist
+	// 7. Update ffplayout playlist
 	const token = await get_token()
 	await update_playlists(new_pages_data, token)
 	await reset_player_state(token)	
 
-	// 7. Save program state as json
+	// 8. Save program state as json
 	save_pages_state(new_pages_data)
 
-	// 8. Sleep 5 sec
+	// 9. Sleep 5 sec
 	await new Promise(r => setTimeout(r, 5000))
 
-	// 8. Repeat
+	// 10. Repeat
 	main()
 }
 
