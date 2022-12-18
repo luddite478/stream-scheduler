@@ -3,13 +3,12 @@
   become: true
   become_user: root
 
-  vars:
-    - unix_username: luddite478
-
-  vars_prompt:
-    - name: unix_password
-      prompt: Unix password?
-      private: true
+  pre_tasks:
+    - name: Loading environment variables
+      tags: always
+      set_fact:
+        UNIX_USERNAME: '{{ lookup("env", "UNIX_USERNAME") | trim }}'
+        UNIX_USER_PASSWORD: '{{ lookup("env", "UNIX_PASSWORD") | trim }}'
 
   tasks:
 
@@ -21,14 +20,20 @@
 
     - name: Create a unix user
       user:
-        name: "{{ unix_username }}"
-        password: "{{ unix_password | password_hash('sha512') }}"
+        name: "{{ UNIX_USERNAME }}"
+        password: "{{ UNIX_PASSWORD | password_hash('sha512') }}"
         groups:
          - sudo
         state: present
         shell: /bin/bash       
         createhome: yes        
-        home: "/home/{{ unix_username }}"
+        home: "/home/{{ UNIX_USERNAME }}"
+
+    - name: Install git
+      apt:
+        name: git
+        state: present
+        update_cache: yes
 
 
 
@@ -40,9 +45,6 @@
   vars:
     ffplayout_url_path: https://github.com/ffplayout/ffplayout/releases/download/v0.16.5
     ffplayout_file_name: ffplayout_0.16.5_amd64.deb
-    ffplayout_folder_1: /usr/share/ffplayout/
-    ffplayout_folder_2: /var/lib/ffplayout/
-    ffplayout_folder_3: /usr/share/ffplayout/public/live/
 
   tasks:
 
@@ -55,24 +57,6 @@
     - name: Install deb
       apt:
         deb: "/tmp/{{ ffplayout_file_name }}"
-
-    - name: Changing perm of ffplayout folder 1
-      file:
-        path: "{{ ffplayout_folder_1 }}"
-        state: directory
-        mode: 0777
-
-    - name: Changing perm of ffplayout folder 2
-      file:
-        path: "{{ ffplayout_folder_2 }}"
-        state: directory
-        mode: 0777
-
-    - name: Changing perm of ffplayout folder 3
-      file:
-        path: "{{ ffplayout_folder_3 }}"
-        state: directory
-        mode: 0777
 
     - name: Set timezone to Asia/Baku
       community.general.timezone:
@@ -90,15 +74,15 @@
 
         
   
-- name: Install ffmpeg
-  hosts: virtualmachines
-  become: true
-  become_user: root
+# - name: Compile ffmpeg
+#   hosts: virtualmachines
+#   become: true
+#   become_user: root
 
-  vars:
-    source_dir: "/usr/local/src"
-    lib_dir: "/usr/local/lib"
-    bin_dir: "/usr/local/bin"
+#   vars:
+#     source_dir: "/usr/local/src"
+#     lib_dir: "/usr/local/lib"
+#     bin_dir: "/usr/local/bin"
 
   # tasks:
 
@@ -199,15 +183,91 @@
   become: true
   become_user: root
 
-  vars:
-    - unix_username: luddite478
+  pre_tasks:
+    - name: Loading environment variables
+      tags: always
+      set_fact:
+        UNIX_USERNAME: '{{ lookup("env", "UNIX_USERNAME") | trim }}'
 
   tasks:
     - name: Clone latest stream-scheduler
       git: repo=https://github.com/luddite478/stream-scheduler.git
-           dest=home/{{ unix_username }}
+           dest=/home/{{ UNIX_USERNAME }}/stream-scheduler
            accept_hostkey=yes
 
     - name: Install packages based on package.json.
       community.general.npm:
-        path: home/{{ unix_username }}/stream-scheduler
+        path: '/home/{{ UNIX_USERNAME }}/stream-scheduler'
+
+    - name: Copy .env file
+      copy:
+        src: ../linux.env
+        dest: '/home/{{ UNIX_USERNAME }}/stream-scheduler/.env'
+
+- name: Additional setup
+  hosts: virtualmachines
+  become: true
+  become_user: root
+
+  pre_tasks:
+    - name: Loading environment variables
+      tags: always
+      set_fact:
+        UNIX_USERNAME: '{{ lookup("env", "UNIX_USERNAME") | trim }}'
+        FFPLAYOUT_MEDIA_FOLDER: '{{ lookup("env", "FFPLAYOUT_MEDIA_FOLDER") | trim }}'
+        TMP_MEDIA_FOLDER: '{{ lookup("env", "TMP_MEDIA_FOLDER") | trim }}'
+        FFPLAYOUT_PLAYLISTS_FOLDER: '{{ lookup("env", "FFPLAYOUT_PLAYLISTS_FOLDER") | trim }}'
+        PLACEHOLDER_PATH: '{{ lookup("env", "PLACEHOLDER_PATH") | trim }}'
+  tasks:
+    - name: Copy ffplayout config
+      copy:
+        src: ../prod-ffplayout.yml
+        dest: /etc/ffplayout/ffplayout.yml
+        owner: '{{ UNIX_USERNAME }}'
+        group: '{{ UNIX_USERNAME }}'
+        mode: '0777'
+
+    - name: Copy precompiled ffmpeg
+      ansible.builtin.copy:
+        src: /home/{{ unix_username }}/stream-scheduler/bin/ffmpeg
+        dest: /usr/bin/ffmpeg
+        owner: '{{ UNIX_USERNAME }}'
+        group: '{{ UNIX_USERNAME }}'
+        mode: '0777'
+        remote_src: true
+
+    - name: Copy precompiled ffprobe
+      ansible.builtin.copy:
+        src: /home/{{ unix_username }}/stream-scheduler/bin/ffprobe
+        dest: /usr/bin/ffprobe
+        owner: '{{ UNIX_USERNAME }}'
+        group: '{{ UNIX_USERNAME }}'
+        mode: '0777'
+        remote_src: true
+
+    - name: Changing perm of ffplayout folder 1
+      file:
+        path: "{{ FFPLAYOUT_MEDIA_FOLDER }}"
+        state: directory
+        mode: 0777
+
+    - name: Changing perm of ffplayout folder 2
+      file:
+        path: "{{ TMP_MEDIA_FOLDER }}"
+        state: directory
+        mode: 0777
+
+    - name: Changing perm of ffplayout folder 3
+      file:
+        path: "{{ FFPLAYOUT_PLAYLISTS_FOLDER }}"
+        state: directory
+        mode: 0777
+
+    - name: Check if placeholder exists
+      stat:
+        path: "{{ PLACEHOLDER_PATH }}"
+      register: stat_result
+
+    # - name: Create the placeholder, if it doesnt exist already
+    #   shell: ffmpeg -i '/home/{{ UNIX_USERNAME|quote }}/stream-scheduler/sounds/brown_noise_5min.aac'
+    #   when: not stat_result.stat.exists

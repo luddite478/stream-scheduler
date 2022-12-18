@@ -1,1 +1,1 @@
-```ansible-playbook -i inventory.yaml playbook.yaml```
+```./ansible-playbook.sh -i inventory.yaml playbook.yaml -K```

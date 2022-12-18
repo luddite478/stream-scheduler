@@ -3,7 +3,6 @@ node_modules/
 *.wav
 tmp
 ffmpeg_std*
-ffprobe*
 playlists
 media/
 mock*
