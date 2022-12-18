@@ -1,1 +1,1 @@
-```./ansible-playbook.sh -i inventory.yaml playbook.yaml -K```
+```./ansible-playbook.sh -i inventory.yaml playbook.yaml -K --flush-cache```
