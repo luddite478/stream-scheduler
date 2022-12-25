@@ -25,7 +25,7 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 	        '-i', video1_path,
 	        '-map', '1:v:0',
 	        '-map', '0:a:0',
-	        '-acodec', 'aac',
+	        '-acodec', 'libfdk_aac',
 	        '-vcodec', 'copy',
 	        shortest,
 	       	duration1, duration2,
@@ -121,7 +121,7 @@ function loop_audio(input_path, repeats_number) {
 	try {
 		// apply micro fadein/fadeout
 		const faded_audio = fadein_fadeout_audio(input_path)
-		// create txt file fo concatenation
+		// create txt file for concatenation
 		const tmp_concat_file = path.join(process.env.TMP_MEDIA_FOLDER,'concat.txt')
 
 		let concat_str = ``
@@ -163,6 +163,55 @@ function loop_audio(input_path, repeats_number) {
 	}
 }
 
+function concat_audio(audio_paths) {
+	try {
+		// apply micro fadein/fadeout
+		audio_paths = audio_paths.map(audio => {
+			return fadein_fadeout_audio(audio)
+		})
+		
+		// create txt file for concatenation
+		const tmp_concat_file = path.join(process.env.TMP_MEDIA_FOLDER,'concat.txt')
+
+		let concat_str = ``
+		for (i=0;i<audio_paths.length;i++) {
+			concat_str+=`file '${audio_paths[i]}'\n`
+		}
+
+		const basename = path.basename(audio_paths[0])
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, `[concat_audio]-` + basename)
+
+		fs.writeFileSync(tmp_concat_file, concat_str)
+
+	    const args = [
+	        '-hide_banner',
+	        '-f', 'concat', 
+	        '-safe', '0',
+	        '-i', tmp_concat_file,
+	        '-c', 'copy',
+	       	'-y',
+	        `${output_path}`
+	    ]
+
+
+	    const log_msg = `\n*** Concatenating:\n ${audio_paths.join('\n')}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+		fs.unlinkSync(tmp_concat_file)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (loop_audio):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not concat audios ${audio_paths.join('\n')}, error: `, e)
+	}
+}
+
 function audio_reencode_aac(audio) {
 	try {
 
@@ -184,7 +233,7 @@ function audio_reencode_aac(audio) {
 	    const args = [
 	        '-hide_banner',
 	        '-i', audio,
-	        '-c', 'aac',
+	        '-c', 'libfdk_aac',
 	       	'-y',
 	        `${output_path}`
 	    ]
@@ -257,7 +306,7 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	        '-f', 'lavfi',
 	        '-i', `color=c=${color}:s=1920x640:d=60:r=25,format=pix_fmts=yuv420p`,
 	        '-vcodec', 'libx24',
-	        '-acodec', 'aac',
+	        '-acodec', 'libfdk_aac',
 	       	'-y',
 	        output_path
 	    ]
@@ -389,5 +438,6 @@ module.exports = {
 	loop_audio,
 	reencode_video,
 	loop_video,
-	video_to_target_duration
+	video_to_target_duration,
+	concat_audio
 }

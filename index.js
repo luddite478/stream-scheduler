@@ -23,6 +23,7 @@ const { merge_audio_and_video,
 		merge_audio, 
 		loop_audio, 
 		loop_video,
+		concat_audio,
 		reencode_video,
 		video_to_target_duration,
 		audio_reencode_aac } = require('./ffmpeg')
@@ -269,6 +270,33 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
 			return result_mp4
+
+		// multiple audio, no video
+		} else if (
+			audio_files.length > 1 && 
+		    video_files.length === 0) { 
+			// concat audio 
+			const src_audios = audio_files.map(({audio}) => audio)
+			const resolution = process.env.DEFAULT_RESOLUTION
+			const concatenated_audio = concat_audio(src_audios)
+			const { repeats: a_repeats, 
+				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(concatenated_audio, params.duration)
+			// loop to match duration
+			const looped_audio = loop_audio(concatenated_audio, a_repeats)
+			const aac_audio = audio_reencode_aac(looped_audio)
+
+			// choose default video
+			let dflt_video = fs.readdirSync('videos/default')
+				.filter(file => file.includes(resolution))
+				.sort((a, b) => 0.5 - Math.random())[0]
+
+			dflt_video = path.join('videos/default', dflt_video)
+			params = { ...params, resolution }
+			merge_audio_and_video(aac_audio, dflt_video, params, output_path)
+			// fs.unlinkSync(concatenated_audio)			
+			// fs.unlinkSync(looped_audio)
+			// fs.unlinkSync(aac_audio)
+			return output_path
 
 		// multiple audio, one video
 		} else if (
