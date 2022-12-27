@@ -402,11 +402,11 @@ function video_to_target_duration(video, duration) {
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
 	    const args = [
 	        '-hide_banner',
-	        '-stream_loop', '10',
+	        '-stream_loop', '-1',
 	        '-i', video,
 	       	'-y',
 	       	'-c', 'copy',
-	       	// '-t', duration,
+	       	'-t', duration,
 	        output_path
 	    ]
 
