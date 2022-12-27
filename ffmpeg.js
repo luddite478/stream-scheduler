@@ -402,8 +402,9 @@ function video_to_target_duration(video, target_duration) {
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
 
 		const video_duration = get_duration(video)
-
+		console.log(video_duration, target_duration)
 		if (video_duration >= target_duration) {
+			console.log('here')
 			const repeats = Math.floor(target_duration/file_duration)
 			const remainder = target_duration % file_duration
 
