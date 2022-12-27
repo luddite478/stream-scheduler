@@ -395,22 +395,54 @@ function reencode_video(input_path) {
 	}
 }
 
-function video_to_target_duration(video, duration) {
+function video_to_target_duration(video, target_duration) {
 	try {
 		
 		const basename = path.basename(video)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
-	    const args = [
-	        '-hide_banner',
-	        '-stream_loop', '-1',
-	        '-i', video,
-	       	'-y',
-	       	'-c', 'copy',
-	       	'-t', duration,
-	        output_path
-	    ]
 
-	    const log_msg = `\n*** Cut/extend video ${video} to target duration ${duration}\noutput: ${output_path}`
+		const video_duration = get_duration(video)
+
+		if (video_duration >= target_duration) {
+			const repeats = Math.floor(target_duration/file_duration)
+			const remainder = target_duration % file_duration
+
+			const args1 = [
+		        '-hide_banner',
+		        '-stream_loop', repeats,
+		        '-i', video,
+		       	'-y',
+		       	'-c', 'copy',
+		        output_path
+	    	]
+
+	    	const args2 = [
+		        '-hide_banner',
+		        '-ss' '00:00:00',
+		        '-i', video,
+		       	'-c', 'copy',
+		       	'-t', remainder,
+		       	'-y'
+		        output_path
+	    	]
+
+		    const log_msg = `\n*** Eextend video ${video} to target duration ${target_duration},\nrepeats ${repeats},\nremainder ${remainder} \noutput: ${output_path}`
+		    console.log(log_msg)
+		    discord_send(log_msg)
+			const proc = spawnSync('ffmpeg', args1)
+		} else {
+			const args = [
+		        '-hide_banner',
+		        '-ss' '00:00:00',
+		        '-i', video,
+		       	'-c', 'copy',
+		       	'-t', target_duration,
+		       	'-y'
+		        output_path
+	    	]
+		}
+
+	    const log_msg = `\n*** Cut video ${video} to target duration ${target_duration}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
