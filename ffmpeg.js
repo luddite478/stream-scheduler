@@ -455,7 +455,7 @@ function video_to_target_duration(video, target_duration) {
 		return output_path
 
 	} catch(e) {
-		console.log(`Can not add fade to ${input_path}, error: `, e)
+		console.log(`Can not cut/extend video ${video}, error: `, e)
 	}
 }
 
