@@ -405,8 +405,8 @@ function video_to_target_duration(video, target_duration) {
 		console.log(video_duration, target_duration, video_duration >= target_duration)
 		if (target_duration >= video_duration) {
 			console.log('here')
-			const repeats = Math.floor(target_duration/file_duration)
-			const remainder = target_duration % file_duration
+			const repeats = Math.floor(target_duration/video_duration)
+			const remainder = target_duration % video_duration
 
 			const args1 = [
 		        '-hide_banner',
