@@ -418,7 +418,7 @@ function video_to_target_duration(video, target_duration) {
 
 	    	const args2 = [
 		        '-hide_banner',
-		        '-ss' '00:00:00',
+		        '-ss', '00:00:00',
 		        '-i', video,
 		       	'-c', 'copy',
 		       	'-t', remainder,
@@ -433,7 +433,7 @@ function video_to_target_duration(video, target_duration) {
 		} else {
 			const args = [
 		        '-hide_banner',
-		        '-ss' '00:00:00',
+		        '-ss', '00:00:00',
 		        '-i', video,
 		       	'-c', 'copy',
 		       	'-t', target_duration,
