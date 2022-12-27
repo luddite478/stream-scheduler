@@ -103,6 +103,8 @@
         - pkg-config 
         - texi2html 
         - zlib1g-dev
+        - libzmq3-dev
+        - libavutil-dev
         - libmp3lame-dev
         - yasm
         - nasm
@@ -145,7 +147,7 @@
         chdir: "{{ source_dir }}/ffmpeg" 
         creates: "{{ bin_dir }}/ffmpeg"
       with_items:
-        - ./configure --bindir={{ bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libx265 --enable-libzmq --enable-nonfree
+        - ./configure --bindir={{ bin_dir }} --extra-libs=-ldl --enable-gpl --enable-libass --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libzmq --enable-libfreetype --enable-nonfree
         - make -j 4
         - make install
         - make distclean
@@ -236,24 +238,6 @@
         group: '{{ UNIX_USERNAME }}'
         mode: '0777'
 
-    # - name: Copy precompiled ffmpeg
-    #   ansible.builtin.copy:
-    #     src: '/home/{{ UNIX_USERNAME }}/stream-scheduler/bin/ffmpeg'
-    #     dest: /usr/bin/ffmpeg
-    #     owner: '{{ UNIX_USERNAME }}'
-    #     group: '{{ UNIX_USERNAME }}'
-    #     mode: '0777'
-    #     remote_src: true
-
-    # - name: Copy precompiled ffprobe
-    #   ansible.builtin.copy:
-    #     src: '/home/{{ UNIX_USERNAME }}/stream-scheduler/bin/ffprobe'
-    #     dest: /usr/bin/ffprobe
-    #     owner: '{{ UNIX_USERNAME }}'
-    #     group: '{{ UNIX_USERNAME }}'
-    #     mode: '0777'
-    #     remote_src: true
-
     - name: Changing perm of ffplayout folder 1
       file:
         path: "{{ FFPLAYOUT_MEDIA_FOLDER }}"
@@ -277,14 +261,14 @@
         path: "{{ PLACEHOLDER_PATH }}"
       register: stat_result
 
-    - name: Create the placeholder, if it doesnt exist already
-      shell: ffmpeg -stream_loop -1 -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/sounds/brown_noise_5min.aac -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/videos/default/corpseyt1_10min_1576x722.mp4 -vcodec h264 -movflags faststart -t 24:00:00 {{ PLACEHOLDER_PATH|quote }}
-      when: not stat_result.stat.exists
+    # - name: Create the placeholder, if it doesnt exist already
+    #   shell: ffmpeg -stream_loop -1 -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/sounds/brown_noise_5min.aac -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/videos/default/corpseyt1_10min_1576x722.mp4 -vcodec h264 -movflags faststart -t 24:00:00 {{ PLACEHOLDER_PATH|quote }}
+    #   when: not stat_result.stat.exists
 
     - name: Remind to create user  -movflags faststart
       debug:
         msg: "Login to host and create ffpapi user with 'ffpapi -a' if doesn't exist"
 
-    - name: Start stream-scheduler
-      shell: nohup node /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/index.js
+    # - name: Start stream-scheduler
+    #   shell: nohup node /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/index.js
         

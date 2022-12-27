@@ -405,7 +405,7 @@ function video_to_target_duration(video, duration) {
 	        '-stream_loop', '-1',
 	        '-i', video,
 	       	'-y',
-	       	'-c', 'copy',
+	       	'-c', 'libx264',
 	       	'-t', duration,
 	        output_path
 	    ]
@@ -417,8 +417,8 @@ function video_to_target_duration(video, duration) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`Error (reencode_video):\n${proc.stderr.toString()}`)
-		}
+			discord_send(`Error (Cut/extend video):\n${proc.stderr.toString()}`)
+		}ideo)
 
 		return output_path
 
