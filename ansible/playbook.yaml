@@ -43,8 +43,8 @@
   become_user: root 
 
   vars:
-    ffplayout_url_path: https://github.com/ffplayout/ffplayout/releases/download/v0.16.5
-    ffplayout_file_name: ffplayout_0.16.5_amd64.deb
+    ffplayout_url_path: https://github.com/ffplayout/ffplayout/releases/download/v0.16.7
+    ffplayout_file_name: ffplayout_0.16.7_amd64.deb
 
   tasks:
 

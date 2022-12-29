@@ -193,6 +193,8 @@ function concat_audio(audio_paths) {
 	        `${output_path}`
 	    ]
 
+	    console.log(concat_str)
+	    discord_send(concat_str)
 
 	    const log_msg = `\n*** Concatenating:\n ${audio_paths.join('\n')}`
 	    console.log(log_msg)
@@ -202,7 +204,7 @@ function concat_audio(audio_paths) {
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
-			discord_send(`Error (loop_audio):\n${proc.stderr.toString()}`)
+			discord_send(`Error (concat_audio):\n${proc.stderr.toString()}`)
 		}
 
 		return output_path
