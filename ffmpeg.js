@@ -196,7 +196,7 @@ function concat_audio(audio_paths) {
 	    console.log(concat_str)
 	    discord_send(concat_str)
 
-	    const log_msg = `\n*** Concatenating:\n ${audio_paths.join('\n')}`
+	    const log_msg = `\n*** Concatenating:\n ${audio_paths.join('\n')}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
