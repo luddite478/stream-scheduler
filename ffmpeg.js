@@ -119,6 +119,7 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 
 function loop_audio(input_path, repeats_number) {
 	try {
+		console.log('loop_audio')
 		// apply micro fadein/fadeout
 		const faded_audio = fadein_fadeout_audio(input_path)
 		// create txt file for concatenation
@@ -145,7 +146,7 @@ function loop_audio(input_path, repeats_number) {
 	    ]
 
 
-	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}`
+	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}\noutput:${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
@@ -190,13 +191,10 @@ function concat_audio(audio_paths) {
 	        '-i', tmp_concat_file,
 	        '-c', 'copy',
 	       	'-y',
-	        `${output_path}`
+	        output_path
 	    ]
 
-	    console.log(concat_str)
-	    discord_send(concat_str)
-
-	    const log_msg = `\n*** Concatenating:\n ${audio_paths.join('\n')}\noutput: ${output_path}`
+	    const log_msg = `\n*** Concatenating:\n${audio_paths.join('\n')}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
 		const proc = spawnSync('ffmpeg', args)
@@ -399,14 +397,12 @@ function reencode_video(input_path) {
 
 function video_to_target_duration(video, target_duration) {
 	try {
-		
+		console.log('video_to_target_duration')
 		const basename = path.basename(video)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
 
 		const video_duration = get_duration(video)
-		console.log(video_duration, target_duration, video_duration >= target_duration)
 		if (target_duration >= video_duration) {
-			console.log('here')
 			const repeats = Math.floor(target_duration/video_duration)
 			const remainder = target_duration % video_duration
 
@@ -429,7 +425,7 @@ function video_to_target_duration(video, target_duration) {
 		        output_path
 	    	]
 
-		    const log_msg = `\n*** Eextend video ${video} to target duration ${target_duration},\nrepeats ${repeats},\nremainder ${remainder} \noutput: ${output_path}`
+		    const log_msg = `\n*** Extend video ${video} to target duration ${target_duration},\nrepeats ${repeats},\nremainder ${remainder} \noutput: ${output_path}`
 			const proc = spawnSync('ffmpeg', args1)
 
 			console.log(log_msg)
