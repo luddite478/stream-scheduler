@@ -25,7 +25,7 @@ function merge_audio_and_video(audio1_path, video1_path, params, output_path) {
 	        '-i', video1_path,
 	        '-map', '1:v:0',
 	        '-map', '0:a:0',
-	        '-acodec', 'libfdk_aac',
+	        '-acodec', 'aac',
 	        '-vcodec', 'copy',
 	        shortest,
 	       	duration1, duration2,
@@ -86,23 +86,87 @@ function merge_audio(audio_files) {
 	}
 }
 
-function fadein_fadeout_audio(input_path, fade=0.015) {
+// function fadein_fadeout_audio(input_path, fade=0.015) {
+// 	try {
+		
+// 		const basename = path.basename(input_path)
+// 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[fadein_fadeout_audio]-' + basename)
+// 	    const args = [
+// 	        '-hide_banner',
+// 	        '-i', input_path,
+// 	        '-af', `afade=d=${fade},areverse,afade=d=${fade},areverse`,
+// 	       	'-y',
+// 	        output_path
+// 	    ]
+
+// 	    const log_msg = `\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`
+// 	    console.log(log_msg)
+// 	    discord_send(log_msg)
+// 		const proc = spawnSync('ffmpeg', args)
+
+// 		if (proc.status !== 0) {
+// 			console.log(`\n${proc.stderr.toString()}`)
+// 			discord_send(`Error (fadein_fadeout_audio):\n${proc.stderr.toString()}`)
+// 		}
+
+// 		return output_path
+
+// 	} catch(e) {
+// 		console.log(`Can not add fade to ${input_path}, error: `, e)
+// 	}
+// }
+
+function convert_to_wav(input_path) {
 	try {
 		
 		const basename = path.basename(input_path)
-		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[fadein_fadeout_audio]-' + basename)
+		let output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[to_wav]-' + basename)
+		output_path = path.join(path.parse(output_path).dir, path.parse(output_path).name)
+		output_path = output_path + '.wav'
+
 	    const args = [
 	        '-hide_banner',
 	        '-i', input_path,
-	        '-af', `afade=d=${fade},areverse,afade=d=${fade},areverse`,
 	       	'-y',
 	        output_path
+	    ]
+
+	    const log_msg = `\n*** Converting to wav ${input_path}\noutput file: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (convert_to_wav):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not convert to wav ${input_path}, error: `, e)
+	}
+}
+
+function fadein_fadeout_audio(input_path, fade=0.015) {
+	try {
+
+		const wav_audio = convert_to_wav(input_path)
+		console.log('HERE',wav_audio)
+		const basename = path.basename(wav_audio)
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[fadein_fadeout_audio]-' + basename)
+
+	    const args = [
+	        wav_audio,
+	        output_path,
+	        'fade', fade,
+	        '-0', fade,
 	    ]
 
 	    const log_msg = `\n*** Applying fade in/out ${fade} sec for ${input_path}\noutput file: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
-		const proc = spawnSync('ffmpeg', args)
+		const proc = spawnSync('sox', args)
 
 		if (proc.status !== 0) {
 			console.log(`\n${proc.stderr.toString()}`)
@@ -119,9 +183,9 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 
 function loop_audio(input_path, repeats_number) {
 	try {
-		console.log('loop_audio')
 		// apply micro fadein/fadeout
 		const faded_audio = fadein_fadeout_audio(input_path)
+		
 		// create txt file for concatenation
 		const tmp_concat_file = path.join(process.env.TMP_MEDIA_FOLDER,'concat.txt')
 
@@ -145,7 +209,6 @@ function loop_audio(input_path, repeats_number) {
 	        `${output_path}`
 	    ]
 
-
 	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}\noutput:${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
@@ -157,7 +220,9 @@ function loop_audio(input_path, repeats_number) {
 			discord_send(`Error (loop_audio):\n${proc.stderr.toString()}`)
 		}
 
-		return output_path
+		const aac_audio = audio_reencode_aac(faded_audio)
+
+		return aac_audio
 
 	} catch(e) {
 		console.log(`Can not loop audio ${input_path}, error: `, e)
@@ -193,7 +258,6 @@ function concat_audio(audio_paths) {
 	       	'-y',
 	        output_path
 	    ]
-
 	    const log_msg = `\n*** Concatenating:\n${audio_paths.join('\n')}\noutput: ${output_path}`
 	    console.log(log_msg)
 	    discord_send(log_msg)
@@ -233,7 +297,7 @@ function audio_reencode_aac(audio) {
 	    const args = [
 	        '-hide_banner',
 	        '-i', audio,
-	        '-c', 'libfdk_aac',
+	        '-c', 'aac',
 	       	'-y',
 	        `${output_path}`
 	    ]
@@ -306,7 +370,7 @@ function merge_audio_and_color_image(audio_file, color='#121212') {
 	        '-f', 'lavfi',
 	        '-i', `color=c=${color}:s=1920x640:d=60:r=25,format=pix_fmts=yuv420p`,
 	        '-vcodec', 'libx24',
-	        '-acodec', 'libfdk_aac',
+	        '-acodec', 'aac',
 	       	'-y',
 	        output_path
 	    ]
