@@ -151,8 +151,8 @@ function convert_to_wav(input_path) {
 function fadein_fadeout_audio(input_path, fade=0.015) {
 	try {
 
+		const ext = path.parse(input_path).ext
 		const wav_audio = convert_to_wav(input_path)
-		console.log('HERE',wav_audio)
 		const basename = path.basename(wav_audio)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[fadein_fadeout_audio]-' + basename)
 
@@ -173,6 +173,7 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 			discord_send(`Error (fadein_fadeout_audio):\n${proc.stderr.toString()}`)
 		}
 
+		// const reencoded_audio = reencode_audio(output_path, '') 
 		return output_path
 
 	} catch(e) {

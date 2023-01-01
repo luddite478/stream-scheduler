@@ -371,7 +371,8 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 
 			const audio_files = []
 			const video_files = []
-			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, page.meta.id + '.mp4')
+			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, 
+				`${page.meta.last_edited_time.replaceAll(':','-')}-${page.meta.id}.mp4`)
 			// TODO: better params handling
 			const { play_time } = page
 			const tags = page.meta.tags
@@ -394,7 +395,8 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 
 		// append mp4 paths to pages
 		return pages_data.map(page => {
-			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, page.meta.id + '.mp4')
+			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, 
+				`${page.meta.last_edited_time.replaceAll(':','-')}-${page.meta.id}.mp4`)
 			return {
 				...page,
 				mp4: output_path

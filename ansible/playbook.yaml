@@ -256,10 +256,16 @@
         state: directory
         mode: 0777
 
+    - name: Install sox
+      apt:
+        name: sox
+        state: latest
+
     - name: Check if placeholder exists
       stat:
         path: "{{ PLACEHOLDER_PATH }}"
       register: stat_result
+
 
     # - name: Create the placeholder, if it doesnt exist already
     #   shell: ffmpeg -stream_loop -1 -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/sounds/brown_noise_5min.aac -i /home/{{ UNIX_USERNAME|quote }}/stream-scheduler/videos/default/corpseyt1_10min_1576x722.mp4 -vcodec h264 -movflags faststart -t 24:00:00 {{ PLACEHOLDER_PATH|quote }}
