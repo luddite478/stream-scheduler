@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const axios = require('axios')
 const { parseISO, differenceInSeconds } = require('date-fns')
+const { rimrafSync } = require('rimraf')
 
 function get_duration(file) {
 	try {
@@ -89,10 +90,24 @@ function get_time_interval_sec(start, end) {
 	)
 }
 
+function delete_data_older_than(dir, time_sec) {
+	const files = fs.readdirSync(dir)
+	files.forEach((f) => {
+		const stat = fs.statSync(path.join(dir,f))
+		const now = new Date().getTime()
+		const endTime = new Date(stat.ctime).getTime() + (time_sec*1000)
+		console.log(now,endTime)
+		if (now > endTime) {
+	        return rimrafSync(path.join(dir, f))
+        }
+    })
+}
+
 module.exports = {
 	get_duration,
 	download_file,
 	is_json_string,
 	get_time_interval_sec,
-	get_codec_name
+	get_codec_name,
+	delete_data_older_than
 }

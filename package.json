@@ -19,6 +19,7 @@
     "duration-fns": "^3.0.1",
     "find-remove": "^4.1.0",
     "moment": "^2.29.4",
-    "moment-duration-format": "^2.3.2"
+    "moment-duration-format": "^2.3.2",
+    "rimraf": "^4.1.1"
   }
 }

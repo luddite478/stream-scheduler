@@ -300,7 +300,7 @@ function set_pages_playlist_dates(pages_data) {
 			new Date(page.meta.play_time.end) < playlist_day_end) {
 			page.meta.play_time.playlist_day = yyyy_mm_dd_start.toISOString().split('T')[0]
 		} else {
-			console.log('\nset_page_playlist_day: out of range')
+			console.log('\nset_pages_playlist_dates: out of range')
 		}
 		pages_with_playlist_dates.push(page)
 	})

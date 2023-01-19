@@ -207,7 +207,7 @@ function loop_audio(input_path, repeats_number) {
 	        '-i', tmp_concat_file,
 	        '-c', 'copy',
 	       	'-y',
-	        `${output_path}`
+	        output_path
 	    ]
 
 	    const log_msg = `\n*** Looping ${input_path}\nNumber of loops: ${repeats_number}\noutput:${output_path}`

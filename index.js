@@ -31,7 +31,8 @@ const { merge_audio_and_video,
 const { download_file, 
 		is_json_string, 
 		get_time_interval_sec, 
-		get_duration } = require('./utils')
+		get_duration,
+		delete_data_older_than } = require('./utils')
 
 const { save_ffplayout_playlist,
 		delete_ffplayout_playlist,
@@ -539,12 +540,12 @@ async function update_playlists(pages_data, token) {
 
 function delete_tmp_data_older_than(time) {
 	const tmp_dir = path.join(process.env.TMP_MEDIA_FOLDER)
-	findRemoveSync(tmp_dir, {age: {seconds: time}})
+	delete_data_older_than(tmp_dir, time)
 }
 
 function delete_page_data_older_than(time) {
-	const tmp_dir = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER)
-	findRemoveSync(tmp_dir, {age: {seconds: time}})
+	const media_dir = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER)
+	delete_data_older_than(media_dir, time)
 }
 
 async function main() {
