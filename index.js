@@ -320,9 +320,11 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const concatenated_videos = concat_video(wave_timer_videos)
 			// const { repeats: v_repeats, 
 			// 	    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
-			const video = video_to_target_duration(concatenated_videos, params.duration)	    
+			const video = video_to_target_duration(concatenated_videos, params.duration)	
+			console.log('LOG1')    
 			// const looped_video = loop_video(concatenated_videos, v_repeats)
 			fs.renameSync(video, output_path)
+			console.log('LOG2')   
 
 			// fs.unlinkSync(concatenated_audio)			
 			// fs.unlinkSync(looped_audio)
