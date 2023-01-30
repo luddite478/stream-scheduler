@@ -344,7 +344,7 @@ function audio_reencode_aac(audio) {
 	        '-i', audio,
 	        '-c', 'aac',
 	       	'-y',
-	       	'-ar', '48000',
+	       	'-ar', '44100',
 	        `${output_path}`
 	    ]
 
@@ -582,7 +582,7 @@ function video_to_target_duration(video, target_duration) {
 		    const log_msg = `\n*** Extend video ${video} to target duration ${target_duration},\nrepeats ${repeats},\nremainder ${remainder} \noutput: ${output_path}`
 			const proc = spawnSync('ffmpeg', args1)
 
-			
+
 			console.log(log_msg)
 	    	// discord_send(log_msg)
 
