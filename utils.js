@@ -96,7 +96,6 @@ function delete_data_older_than(dir, time_sec) {
 		const stat = fs.statSync(path.join(dir,f))
 		const now = new Date().getTime()
 		const endTime = new Date(stat.ctime).getTime() + (time_sec*1000)
-		console.log(now,endTime)
 		if (now > endTime) {
 	        return rimrafSync(path.join(dir, f))
         }

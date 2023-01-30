@@ -72,7 +72,7 @@ processing:
     loud_tp: -1.5
     loud_lra: 11
     volume: 1
-    custom_filter:
+    custom_filter: 
 
 ingest:
     help_text: Run a server for a ingest stream. This stream will override the normal streaming

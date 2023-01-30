@@ -24,8 +24,10 @@ const { merge_audio_and_video,
 		loop_audio, 
 		loop_video,
 		concat_audio,
+		concat_video,
 		reencode_video,
 		video_to_target_duration,
+		generate_waveform_with_timer,
 		audio_reencode_aac } = require('./processing')
 
 const { download_file, 
@@ -301,27 +303,27 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			// // fs.unlinkSync(aac_audio)
 			// return output_path
 
+			// generate waveform videos with timer
+
+			// choose default video
 			const aac_audios = audio_files.map(({audio}) => {
 				return audio_reencode_aac(audio)
-				// generate waveform video with timer
-				generate_waveform_with_timer(audio)
 			})
-			const concatenated_audio = concat_audio(aac_audios)
-			const { repeats: a_repeats, 
-				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(concatenated_audio, params.duration)
-			// loop to match duration
-			const looped_audio = loop_audio(concatenated_audio, a_repeats)
-			
-			// choose default video
 			const resolution = process.env.DEFAULT_RESOLUTION
-			let dflt_video = fs.readdirSync('videos/default')
-				.filter(file => file.includes(resolution))
-				.sort((a, b) => 0.5 - Math.random())[0]
+			let bg_video = 'black_bg_2400x800.mp4'
+			bg_video = path.join('videos/default', bg_video)
+			params.bg_video = bg_video
 
-			dflt_video = path.join('videos/default', dflt_video)
-			const video = video_to_target_duration(dflt_video, params.duration)		
-			params = { ...params, resolution }
-			merge_audio_and_video(looped_audio, video, params, output_path)
+			const wave_timer_videos = aac_audios.map((audio) => {
+				return generate_waveform_with_timer(audio, params)
+			})
+			const concatenated_videos = concat_video(wave_timer_videos)
+			const { repeats: v_repeats, 
+				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
+			// loop to match duration
+			const looped_video = loop_video(concatenated_videos, v_repeats)
+			fs.renameSync(looped_video, output_path)
+
 			// fs.unlinkSync(concatenated_audio)			
 			// fs.unlinkSync(looped_audio)
 			// fs.unlinkSync(aac_audio)

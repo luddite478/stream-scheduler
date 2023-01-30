@@ -277,6 +277,50 @@ function concat_audio(audio_paths) {
 	}
 }
 
+function concat_video(video_paths) {
+	try {
+		
+		// create txt file for concatenation
+		const tmp_concat_file = path.join(process.env.TMP_MEDIA_FOLDER,'concat.txt')
+
+		let concat_str = ``
+		for (i=0;i<video_paths.length;i++) {
+			concat_str+=`file '${video_paths[i]}'\n`
+		}
+
+		const basename = path.basename(video_paths[0])
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, `[concat_video]-` + basename)
+
+		fs.writeFileSync(tmp_concat_file, concat_str)
+
+	    const args = [
+	        '-hide_banner',
+	        '-f', 'concat', 
+	        '-safe', '0',
+	        '-i', tmp_concat_file,
+	        '-c', 'copy',
+	       	'-y',
+	        output_path
+	    ]
+	    const log_msg = `\n*** Concatenating:\n${video_paths.join('\n')}\noutput: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+		fs.unlinkSync(tmp_concat_file)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (concat_video):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not concat videos ${video_paths.join('\n')}, error: `, e)
+	}
+}
+
+
 function audio_reencode_aac(audio) {
 	try {
 
@@ -300,6 +344,7 @@ function audio_reencode_aac(audio) {
 	        '-i', audio,
 	        '-c', 'aac',
 	       	'-y',
+	       	'-ar', '48000',
 	        `${output_path}`
 	    ]
 
@@ -356,6 +401,50 @@ function loop_video(input_path, repeats_number) {
 
 	} catch(e) {
 		console.log(`Can not loop video ${input_path}, error: `, e)
+	}
+}
+
+function generate_waveform_with_timer(audio_file, params) {
+	try {
+		const { name } = path.parse(audio_file)
+
+		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[waveform_timer]-' + name + '.mp4')
+		const font_color = '#d60b37'
+		const res = '2400x800'
+		const wave_color = '#4a4b4f' 
+		const fps = '25'
+		const { bg_video } = params
+		const duration = get_duration(audio_file)
+		const args = [
+		    '-hide_banner',
+		    '-i', audio_file,
+		    '-stream_loop', '-1',
+		    '-i', bg_video,
+		    '-c:v', 'libx264',
+		    '-r', fps,
+		    '-t', duration,
+		    '-pix_fmt', 'yuv420p',
+		    '-filter_complex', `[0:a]asplit=2[a1][a2];fps=${fps},drawtext=fontfile='/root/.fonts/Fonts/MyriadPro-Bold.otf':fontcolor=${font_color}:fontsize=50:x=(w-text_w)/2:y=(h-text_h)/2:text='%{eif\\\:(mod((${duration}-t)/3600, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod((${duration}-t)/60, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod(${duration}-t, 60))\\\:d\\\:2}':x=2140:y=40[v];[a1]aformat=channel_layouts=stereo,showwaves=s=${res}:mode=cline:r=${fps}:colors=${wave_color}[v_w];[v][v_w]overlay=format=auto:x=(W-w)/2:y=(H-h)/2,format=yuv420p[over];[over]pad=w=12+iw:h=12+ih:x=6:y=6:color=blue[v];[v]scale=${res.split('x')[0]}:${res.split('x')[1]}[v]`,
+		   	'-map', '[v]',
+		    '-map', '[a2]',
+		   	'-y',
+		    output_path
+		]
+
+		const log_msg = `\n*** Generating waveform and timer for audio ${audio_file}\noutput: ${output_path}`
+	    console.log(log_msg)
+	    discord_send(log_msg)
+		const proc = spawnSync('ffmpeg', args)
+
+		if (proc.status !== 0) {
+			console.log(`\n${proc.stderr.toString()}`)
+			discord_send(`Error (generate_waveform_with_timer):\n${proc.stderr.toString()}`)
+		}
+
+		return output_path
+
+	} catch(e) {
+		console.log(`Can not generate waveform with timer for ${audio_file}, error: `, e)
 	}
 }
 
@@ -543,5 +632,7 @@ module.exports = {
 	reencode_video,
 	loop_video,
 	video_to_target_duration,
-	concat_audio
+	generate_waveform_with_timer,
+	concat_audio,
+	concat_video
 }
