@@ -583,11 +583,11 @@ function video_to_target_duration(video, target_duration) {
 			const proc = spawnSync('ffmpeg', args1)
 
 			console.log(log_msg)
-	    	discord_send(log_msg)
+	    	// discord_send(log_msg)
 
 	    	// if (proc.status !== 0) {
 				console.log(`\n${proc.stderr.toString()}`)
-				discord_send(`Error (Cut/extend video):\n${proc.stderr.toString()}`)
+				// discord_send(`Error (Cut/extend video):\n${proc.stderr.toString()}`)
 			// }
 
 			return output_path
