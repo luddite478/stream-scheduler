@@ -424,7 +424,7 @@ function generate_waveform_with_timer(audio_file, params) {
 		    '-r', fps,
 		    '-t', duration,
 		    '-pix_fmt', 'yuv420p',
-		    '-filter_complex', `[0:a]asplit=2[a1][a2];fps=${fps},drawtext=fontfile='/root/.fonts/Fonts/MyriadPro-Bold.otf':fontcolor=${font_color}:fontsize=50:x=(w-text_w)/2:y=(h-text_h)/2:text='%{eif\\\:(mod((${duration}-t)/3600, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod((${duration}-t)/60, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod(${duration}-t, 60))\\\:d\\\:2}':x=2140:y=40[v];[a1]aformat=channel_layouts=stereo,showwaves=s=${res}:mode=cline:r=${fps}:colors=${wave_color}[v_w];[v][v_w]overlay=format=auto:x=(W-w)/2:y=(H-h)/2,format=yuv420p[over];[over]pad=w=12+iw:h=12+ih:x=6:y=6:color=blue[v];[v]scale=${res.split('x')[0]}:${res.split('x')[1]}[v]`,
+		    '-filter_complex', `[0:a]asplit=2[a1][a2];fps=${fps},drawtext=fontfile='/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf':fontcolor=${font_color}:fontsize=50:x=(w-text_w)/2:y=(h-text_h)/2:text='%{eif\\\:(mod((${duration}-t)/3600, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod((${duration}-t)/60, 60))\\\:d\\\:2}\\\:%{eif\\\:(mod(${duration}-t, 60))\\\:d\\\:2}':x=2140:y=40[v];[a1]aformat=channel_layouts=stereo,showwaves=s=${res}:mode=cline:r=${fps}:colors=${wave_color}[v_w];[v][v_w]overlay=format=auto:x=(W-w)/2:y=(H-h)/2,format=yuv420p[over];[over]pad=w=12+iw:h=12+ih:x=6:y=6:color=blue[v];[v]scale=${res.split('x')[0]}:${res.split('x')[1]}[v]`,
 		   	'-map', '[v]',
 		    '-map', '[a2]',
 		   	'-y',
