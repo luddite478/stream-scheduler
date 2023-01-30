@@ -551,7 +551,6 @@ function reencode_video(input_path) {
 
 function video_to_target_duration(video, target_duration) {
 	try {
-		console.log('video_to_target_duration')
 		const basename = path.basename(video)
 		const output_path = path.join(process.env.TMP_MEDIA_FOLDER, '[video_to_duration]-' + basename)
 
@@ -585,10 +584,10 @@ function video_to_target_duration(video, target_duration) {
 			console.log(log_msg)
 	    	discord_send(log_msg)
 
-	    	if (proc.status !== 0) {
+	    	// if (proc.status !== 0) {
 				console.log(`\n${proc.stderr.toString()}`)
 				discord_send(`Error (Cut/extend video):\n${proc.stderr.toString()}`)
-			}
+			// }
 
 			return output_path
 		} else {
