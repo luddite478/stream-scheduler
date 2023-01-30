@@ -318,11 +318,11 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 				return generate_waveform_with_timer(audio, params)
 			})
 			const concatenated_videos = concat_video(wave_timer_videos)
-			const { repeats: v_repeats, 
-				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
-			// loop to match duration
-			const looped_video = loop_video(concatenated_videos, v_repeats)
-			fs.renameSync(looped_video, output_path)
+			// const { repeats: v_repeats, 
+			// 	    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
+			const video = video_to_target_duration(concatenated_videos, params.duration)	    
+			// const looped_video = loop_video(concatenated_videos, v_repeats)
+			fs.renameSync(video, output_path)
 
 			// fs.unlinkSync(concatenated_audio)			
 			// fs.unlinkSync(looped_audio)
