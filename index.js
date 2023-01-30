@@ -346,7 +346,7 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const merged_audio = merge_audio(looped_audios)
 			// loop video
 			const { repeats: v_repeats, 
-				    remainder: v_remainder }  = get_number_of_repeats_and_remainder(src_video, params.duration)
+				    remainder: v_remainder } = get_number_of_repeats_and_remainder(src_video, params.duration)
 			const video_file = loop_video(src_video, v_repeats)
 			// merge to result mp4
 			const result_mp4 = merge_audio_and_video(merged_audio, video_file, params, output_path)
