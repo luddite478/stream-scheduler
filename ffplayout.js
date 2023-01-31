@@ -95,12 +95,12 @@ async function get_token() {
 	try {
 
 		const { 
-			FFPLAYOUT_IP, 
+			// FFPLAYOUT_IP, 
 			FFPLAYOUT_PORT,
 			FFPLAYOUT_USERNAME,
 			FFPLAYOUT_PASSWORD
 		} = process.env
-
+		const FFPLAYOUT_IP = '127.0.0.1'
 		const res = await axios({
 			method: 'post',
 			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/auth/login/`,
