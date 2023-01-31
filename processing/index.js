@@ -578,7 +578,6 @@ function video_to_target_duration(video, target_duration) {
 		        output_path
 	    	]
 
-	    	console.log('ffmpeg', args1)
 		    const log_msg = `\n*** Extend video ${video} to target duration ${target_duration},\nrepeats ${repeats},\nremainder ${remainder} \noutput: ${output_path}`
 			const proc = spawnSync('ffmpeg', args1)
 

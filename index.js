@@ -618,9 +618,10 @@ async function main() {
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
 	// 7. Update ffplayout playlist
 	console.log('LOG3')
-	const token = await get_token()
+	// const token = await get_token()
 	console.log('LOG4')
-	await update_playlists(new_pages_data, token)
+	await update_playlists(new_pages_data, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJsdWRkaXRlNDc4Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNjc1Nzc0NDA3fQ.0K73QM71wd64RiY_TvgCmI9sfOUbeWHqbiQVaEE05Gc')
+	// await update_playlists(new_pages_data, token)
 	await reset_player_state(token)	
 
 	// 8. Save program state as json
