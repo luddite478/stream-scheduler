@@ -109,7 +109,7 @@ async function get_token() {
 				'password': FFPLAYOUT_PASSWORD
 			}
 		})
-
+		console.log('token res',res)
 		return res.data.user.token
 
 	} catch (e) {
