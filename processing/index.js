@@ -421,6 +421,7 @@ function generate_waveform_with_timer(audio_file, params) {
 		    '-stream_loop', '-1',
 		    '-i', bg_video,
 		    '-c:v', 'libx264',
+		    '-c:a', 'aac',
 		    '-r', fps,
 		    '-t', duration,
 		    '-pix_fmt', 'yuv420p',
@@ -565,6 +566,7 @@ function video_to_target_duration(video, target_duration) {
 		        '-i', video,
 		       	'-y',
 		       	'-c', 'copy',
+		       	'-c', 'aac',
 		        output_path
 	    	]
 
@@ -597,6 +599,7 @@ function video_to_target_duration(video, target_duration) {
 		        '-ss', '00:00:00',
 		        '-i', video,
 		       	'-c', 'copy',
+		       	'-c', 'aac',
 		       	'-t', target_duration,
 		       	'-y',
 		        output_path
