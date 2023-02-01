@@ -31,19 +31,22 @@ function chunkSubstr(str, size) {
 const wrap_code = (text) => '```' + text + '```'
 
 function discord_send(input_text) {
-
-    if (!discord.bot) {
-        return
-    }
+    try {
+    // if (!discord.bot) {
+    //     return
+    // }
     
-    const text_chunks = chunkSubstr(input_text, 1994)
+    // const text_chunks = chunkSubstr(input_text, 1994)
 
-    text_chunks.forEach(text => {
-        discord.bot.channels.cache.get(process.env.DISCORD_CHANNEL_ID).send(wrap_code(text))
-    })
+    // text_chunks.forEach(text => {
+    //     discord.bot.channels.cache.get(process.env.DISCORD_CHANNEL_ID).send(wrap_code(text))
+    // })
+    } catch (e) {
+        console.log('Discord error')
+    }
 }
 
-client.login(process.env.DISCORD_TOKEN)
+// client.login(process.env.DISCORD_TOKEN)
 
 module.exports = {
     discord_send

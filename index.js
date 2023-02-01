@@ -616,25 +616,36 @@ async function main() {
 
 	// 6. Process and merge media files on each page to one mp4 file
 	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
-	// 7. Update ffplayout playlist
-	console.log('LOG3')
-	// const token = await get_token()
-	console.log('LOG4')
-	await update_playlists(new_pages_data, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJsdWRkaXRlNDc4Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNjc1Nzc0NDA3fQ.0K73QM71wd64RiY_TvgCmI9sfOUbeWHqbiQVaEE05Gc')
-	// await update_playlists(new_pages_data, token)
-	await reset_player_state(token)	
+	try {
 
-	// 8. Save program state as json
-	save_pages_state(new_pages_data)
 
-	// 9. Sleep 5 sec
-	await new Promise(r => setTimeout(r, 5000))
+		// 7. Update ffplayout playlist
+		console.log('LOG3')
+		const token = await get_token()
+		console.log('LOG4')
+		// await update_playlists(new_pages_data, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJsdWRkaXRlNDc4Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNjc1Nzc0NDA3fQ.0K73QM71wd64RiY_TvgCmI9sfOUbeWHqbiQVaEE05Gc')
+		await update_playlists(new_pages_data, token)
+		await reset_player_state(token)	
+
+		// 8. Save program state as json
+		save_pages_state(new_pages_data)
+
+		// 9. Sleep 5 sec
+		await new Promise(r => setTimeout(r, 5000))
+	} catch (e) {
+		console.log('You shall not pass', e)
+	}
 
 	// 10. Repeat
 	main()
 }
 
-main()
+try {
+	main()
+} catch (e) {
+	console.log('You really shall not pass', e)
+}
+
 
 
 
