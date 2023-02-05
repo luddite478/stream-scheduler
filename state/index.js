@@ -31,6 +31,53 @@ function save_pages_state(pages_data) {
 	fs.writeFileSync(STATE_FILE, json_new_state)
 }
 
+function set_pages_output_from_state(unmodified_pages_data) {
+
+	try {
+		if (unmodified_pages_data.length === 0) {
+			return []
+		}
+
+		const { STATE_FILE } = process.env
+
+		let new_state = {}
+
+		if (fs.existsSync(STATE_FILE) &&
+			is_json_string(fs.readFileSync(STATE_FILE, 'utf-8')) &&
+			is_valid_state(JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8')))) {
+			
+			const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'))
+
+			return unmodified_pages_data.map(page => {
+				// find page in state
+				return state.pages.map(state_page => {
+					if (page.meta.id === state_page.meta.id) {
+						const { media } = state_page.output
+						
+						if (!media) {
+							throw new Error('Empty media field in state')
+						}
+
+						return {
+							...page,
+							output: {
+								media
+							}
+						}
+					}
+				})
+			})
+
+
+		} else {
+			throw new Error('Can not set output, no state file')
+		}
+
+	} catch(e) {
+		console.log('Can not set ouput (set_unmodified_pages_output):', e)
+	}
+}
+
 function get_state(pages_data, params=['last_edited_time']) {
 
 	const { STATE_FILE } = process.env
@@ -128,5 +175,6 @@ function get_modified_pages_ids(pages_data) {
 module.exports = {
 	save_pages_state,
 	get_modified_pages_ids,
-	get_state
+	get_state,
+	set_pages_output_from_state
 }

@@ -100,7 +100,7 @@ async function get_token() {
 			FFPLAYOUT_USERNAME,
 			FFPLAYOUT_PASSWORD
 		} = process.env
-		// const FFPLAYOUT_IP = '127.0.0.1'
+
 		const res = await axios({
 			method: 'post',
 			url: `http://${FFPLAYOUT_IP}:${FFPLAYOUT_PORT}/auth/login/`,
@@ -109,7 +109,7 @@ async function get_token() {
 				'password': FFPLAYOUT_PASSWORD
 			}
 		})
-		console.log('token res',res)
+
 		return res.data.user.token
 
 	} catch (e) {
@@ -195,12 +195,15 @@ function add_placeholders(date, pages_data) {
 	pages_data.forEach((page, i) => {
 		let placeholder = {
 			meta: {
+				id: 'placeholder',
 				play_time: { 
 					duration: duration,
 					playlist_day: date
 				}
 			},
-			mp4: PLACEHOLDER_PATH
+			output: {
+				media_files: [ PLACEHOLDER_PATH ]
+			}
 		}
 
 		if (duration > 0) {
@@ -221,15 +224,48 @@ function add_placeholders(date, pages_data) {
 	if (duration_sum < 86400) {
 		pages_with_placeholders.push({
 			meta: {
+				id: 'placeholder',
 				play_time: {
 					duration: 86400-duration_sum,
 					playlist_day: date
 				}		
 			},
-			mp4: PLACEHOLDER_PATH
+			output: {
+				media_files: [ PLACEHOLDER_PATH ]
+			}
 		})
 	}
 	return pages_with_placeholders
+}
+
+function get_number_of_repeats_and_remainder(file_duration, target_duration) {
+
+	if (target_duration < 1) {
+		const log_msg = `
+		\n*** Calculating repeats number to match target duration
+		Target duration is less than 1 second (${target_duration}) 
+		file duration: ${file_duration}
+		repeats: 1
+		remainder: 0
+		`
+		console.log(log_msg)
+		// discord_send(log_msg)
+		return { repeats: 1, remainder: 0 }
+	}
+	
+	const repeats = Math.floor(target_duration/file_duration)
+	const remainder = target_duration % file_duration
+
+	const log_msg = `
+	\n*** Calculating repeats number to match target duration
+	target duration: ${target_duration}
+	file duration: ${file_duration}
+	repeats: ${repeats}
+	remainder: ${remainder}
+	`
+	console.log(log_msg)
+	// discord_send(log_msg)
+	return { repeats, remainder }
 }
 
 function generate_playlists(pages_data) {
@@ -260,17 +296,49 @@ function generate_playlists(pages_data) {
 		}
 	})
 
-	// Generate ffplayout playlist
 	const playlists = date_page_mapping_with_placeholders.map(d => {
-		return {
-			program: d.pages.map(p => {
+		// iterate over pages and placeholders
+		const day_playlists = d.pages.map(p => {	
+			if (p.output.media_files.includes(process.env.PLACEHOLDER_PATH)) {
 				return {
 					in: 0,
 					out: p.meta.play_time.duration,
 					duration: p.meta.play_time.duration,
-					source: p.mp4
+					source: process.env.PLACEHOLDER_PATH
 				}
-			}),
+			}
+
+			const page_duration = p.meta.play_time.duration
+			let page_output_sum_duration = 0
+			const page_output_single_loop = [] 
+			p.output.media_files.forEach(media => {
+				const media_duration = get_duration(media)
+				console.log(media)
+				page_output_sum_duration+=media_duration
+				page_output_single_loop.push({
+					in: 0,
+					out: media_duration,
+					duration: media_duration,
+					source: media
+				})
+			})
+			const { repeats, remainder }  = get_number_of_repeats_and_remainder(page_output_sum_duration, page_duration)
+			// repeat clips N times to match page duration
+			const page_playlist = Array(repeats).fill(page_output_single_loop).flat()
+			// add placeholder to match page duration
+			page_playlist.push({
+					in: 0,
+					out: remainder,
+					duration: remainder,
+					source: process.env.PLACEHOLDER_PATH
+			})
+
+			return page_playlist
+		})
+
+
+		return {
+			program: day_playlists.flat(),
 			date: d.date,
 			channel: '1'
 		}

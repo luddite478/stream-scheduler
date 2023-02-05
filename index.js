@@ -14,7 +14,10 @@ const { format, parseISO, formatISO } = require('date-fns')
 const { formatInTimeZone } = require('date-fns-tz')
 
 const { is_valid_state } = require('./state/validation')
-const { save_pages_state, get_modified_pages_ids, get_state } = require('./state')
+const { save_pages_state, 
+		get_modified_pages_ids, 
+		get_state,
+		set_pages_output_from_state } = require('./state')
 
 const { merge_audio_and_video, 
 		merge_audio_and_image,
@@ -199,7 +202,7 @@ function get_number_of_repeats_and_remainder(file, target_duration) {
 	return { repeats, remainder }
 }
 
-function merge_page_media_files(audio_files, video_files, params, output_path) {
+function process_page_media_files(audio_files, video_files, params, output_path) {
 
 	try {
 		// one video, no audio
@@ -317,19 +320,20 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 			const wave_timer_videos = aac_audios.map((audio) => {
 				return generate_waveform_with_timer(audio, params)
 			})
-			const concatenated_videos = concat_video(wave_timer_videos)
+			// const concatenated_videos = concat_video(wave_timer_videos)
 			// const { repeats: v_repeats, 
 			// 	    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
-			const video = video_to_target_duration(concatenated_videos, params.duration)	
-			console.log('LOG1')    
-			// const looped_video = loop_video(concatenated_videos, v_repeats)
-			fs.renameSync(video, output_path)
-			console.log('LOG2')   
+			// const video = video_to_target_duration(concatenated_videos, params.duration)	
+			// fs.renameSync(video, output_path)
 
-			// fs.unlinkSync(concatenated_audio)			
-			// fs.unlinkSync(looped_audio)
-			// fs.unlinkSync(aac_audio)
-			return output_path
+			const output_videos = wave_timer_videos.map(f => {
+				const filename = path.basename(f)
+				const dest_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, filename)
+				fs.renameSync(f, dest_path)
+				return dest_path
+			})
+
+			return output_videos
 
 
 		// multiple audio, one video
@@ -386,20 +390,15 @@ function merge_page_media_files(audio_files, video_files, params, output_path) {
 	}
 }
 
-function generate_mp4s(pages_data, changed_pages_ids) {
+function process_pages_data(pages_data) {
 
 	try {
-		// if no modified pages return
-		if (changed_pages_ids.length === 0) {
-			console.log('\nNo pages changed or added, skiping generating mp4s...')
+		if (pages_data.length === 0) {
+			console.log('\nNo pages to process, skiping processing...')
 			return
 		}
 
-		const pages_to_process = pages_data.filter(page => {
-			return changed_pages_ids.find(id => page.meta.id === id)
-		})
-
-		pages_to_process.forEach((page) => {
+		return pages_data.map((page) => {
 
 			const audio_files = []
 			const video_files = []
@@ -422,18 +421,29 @@ function generate_mp4s(pages_data, changed_pages_ids) {
 				}
 			})
 
-			merge_page_media_files(audio_files, video_files, params, output_path)
-		})
+			const media_files = process_page_media_files(audio_files, video_files, params, output_path)
 
-		// append mp4 paths to pages
-		return pages_data.map(page => {
-			const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, 
-				`${page.meta.last_edited_time.replaceAll(':','-')}-${page.meta.id}.mp4`)
 			return {
 				...page,
-				mp4: output_path
+				output: {
+					media_files
+				}
 			}
 		})
+
+		// const unchanged_pages = pages_data.filter(page => {
+		// 	return changed_pages_ids.find(id => page.meta.id !== id)
+		// })
+
+		// append mp4 paths to pages
+		// return pages_data.map(page => {
+		// 	const output_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, 
+		// 		`${page.meta.last_edited_time.replaceAll(':','-')}-${page.meta.id}.mp4`)
+		// 	return {
+		// 		...page,
+		// 		mp4: output_path
+		// 	}
+		// })
 
 	} catch (e) {
 		console.log('generate_mp4s error:', e)
@@ -541,11 +551,10 @@ function handle_pages_time_data(pages_data) {
 	return filter_outdated_pages(pages_data)
 }
 
-async function process_pages_data(pages_data, modified_pages_ids) {
+async function process_pages(pages_data) {
 	try {
-		discord_send(`Modified pages ids: ${modified_pages_ids}`)
 		pages_data = await download_pages_media_if_not_exist(pages_data)
-		return generate_mp4s(pages_data, modified_pages_ids)
+		return process_pages_data(pages_data)
 	} catch (e) {
 		console.log('Error (process_pages_data):\n', e.message)
 		discord_send('Error (process_pages_data):\n', e.message)
@@ -558,7 +567,7 @@ async function update_playlists(pages_data, token) {
 		const playlists = generate_playlists(pages_data)
 
 		for (const pllst of playlists) {
-			console.log(pllst)
+			console.log(JSON.stringify(pllst, null, 2))
 			discord_send(`Updating playlist(s):\n ${JSON.stringify(pllst, null, 2)}`)
 			await delete_ffplayout_playlist(pllst.date, token)
 			await save_ffplayout_playlist(pllst, token)
@@ -578,6 +587,7 @@ function delete_page_data_older_than(time) {
 	const media_dir = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER)
 	delete_data_older_than(media_dir, time)
 }
+
 
 async function main() {
 
@@ -611,30 +621,33 @@ async function main() {
 		await new Promise(r => setTimeout(r, 5000))
 		return main() 
 	}
+	// discord_send(`Modified pages ids: ${modified_pages_ids}`)
+	// 6. Get modified pages
+	const modified_pages = pages_data.filter(page => {
+		return modified_pages_ids.find(id => page.meta.id === id)
+	})
 
 	discord_send(`State:\n${JSON.stringify(state, null, 2)}`)
 
-	// 6. Process and merge media files on each page to one mp4 file
-	const new_pages_data = await process_pages_data(pages_data, modified_pages_ids)
-	try {
+	// 7. Process modified pages
+	const modified_pages_data = await process_pages(modified_pages)
+	let unmodified_pages_data = pages_data.filter(page => {
+		return modified_pages_ids.find(id => page.meta.id !== id)
+	})
+	unmodified_pages_data = set_pages_output_from_state(unmodified_pages_data)
+	const new_pages_data = modified_pages_data.concat(unmodified_pages_data)	
 
+	// 8. Update ffplayout playlist
+	const token = await get_token()
+	await update_playlists(new_pages_data, token)
+	await reset_player_state(token)	
 
-		// 7. Update ffplayout playlist
-		console.log('LOG3')
-		const token = await get_token()
-		console.log('LOG4')
-		// await update_playlists(new_pages_data, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJsdWRkaXRlNDc4Iiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNjc1Nzc0NDA3fQ.0K73QM71wd64RiY_TvgCmI9sfOUbeWHqbiQVaEE05Gc')
-		await update_playlists(new_pages_data, token)
-		await reset_player_state(token)	
+	// 9. Save program state as json
+	save_pages_state(new_pages_data)
 
-		// 8. Save program state as json
-		save_pages_state(new_pages_data)
+	// 10. Sleep 5 sec
+	await new Promise(r => setTimeout(r, 5000))
 
-		// 9. Sleep 5 sec
-		await new Promise(r => setTimeout(r, 5000))
-	} catch (e) {
-		console.log('You shall not pass', e)
-	}
 
 	// 10. Repeat
 	main()
