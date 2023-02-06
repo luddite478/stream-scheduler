@@ -304,26 +304,54 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			return output_videos
 
 
-		// multiple audio, one video
+		// // multiple audio, one video [merge audio]
+		// } else if (
+		// 	audio_files.length > 1 && 
+		//     video_files.length === 1 && 
+		//     video_files[0].hasOwnProperty('video')) { 
+		// 	const src_video = video_files[0].video
+		// 	// loop to match duration
+		// 	const looped_audios = audio_files.map(({audio}) => {
+		// 		const { repeats: a_repeats, 
+		// 			    remainder: a_remainder }  = get_number_of_repeats_and_remainder(audio, params.duration)
+		// 		return loop_audio(audio, a_repeats)
+		// 	})
+		// 	// merge audio files
+		// 	const merged_audio = merge_audio(looped_audios)
+		// 	// loop video
+		// 	const { repeats: v_repeats, 
+		// 		    remainder: v_remainder } = get_number_of_repeats_and_remainder(src_video, params.duration)
+		// 	const video_file = loop_video(src_video, v_repeats)
+		// 	// merge to result mp4
+		// 	const result_mp4 = merge_audio_and_video(merged_audio, video_file, params, output_path)
+		// 	// delete intermediate files
+		// 	looped_audios.forEach(audio => fs.unlinkSync(audio))
+		// 	fs.unlinkSync(merged_audio)
+		// 	fs.unlinkSync(video_file)
+		// 	return [ result_mp4 ]
+
+		// multiple audio, one video [concat audio]
 		} else if (
 			audio_files.length > 1 && 
 		    video_files.length === 1 && 
 		    video_files[0].hasOwnProperty('video')) { 
 			const src_video = video_files[0].video
-			// loop to match duration
-			const looped_audios = audio_files.map(({audio}) => {
-				const { repeats: a_repeats, 
-					    remainder: a_remainder }  = get_number_of_repeats_and_remainder(audio, params.duration)
-				return loop_audio(audio, a_repeats)
+			// reencode audios  to aac
+			const aac_audios = audio_files.map(({audio}) => {
+				return audio_reencode_aac(audio)
 			})
+
 			// merge audio files
-			const merged_audio = merge_audio(looped_audios)
+			const concatenated_audios = concat_audio(aac_audios)
+			const { repeats:   a_repeats, 
+				    remainder: a_remainder }  = get_number_of_repeats_and_remainder(concatenated_audios, params.duration)
 			// loop video
 			const { repeats: v_repeats, 
 				    remainder: v_remainder } = get_number_of_repeats_and_remainder(src_video, params.duration)
 			const video_file = loop_video(src_video, v_repeats)
+			const audio_file = loop_audio(concatenated_audios, a_repeats)
 			// merge to result mp4
-			const result_mp4 = merge_audio_and_video(merged_audio, video_file, params, output_path)
+			const result_mp4 = merge_audio_and_video(audio_file, video_file, params, output_path)
 			// delete intermediate files
 			looped_audios.forEach(audio => fs.unlinkSync(audio))
 			fs.unlinkSync(merged_audio)
