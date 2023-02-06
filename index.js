@@ -354,8 +354,8 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			// merge to result mp4
 			const result_mp4 = merge_audio_and_video(audio_file, video_file, params, output_path)
 			// delete intermediate files
-			looped_audios.forEach(audio => fs.unlinkSync(audio))
-			fs.unlinkSync(merged_audio)
+			aac_audios.forEach(audio => fs.unlinkSync(audio))
+			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
 			return [ result_mp4 ]
 
