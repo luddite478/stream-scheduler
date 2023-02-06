@@ -173,8 +173,7 @@ function fadein_fadeout_audio(input_path, fade=0.015) {
 			discord_send(`Error (fadein_fadeout_audio):\n${proc.stderr.toString()}`)
 		}
 
-		// const reencoded_audio = reencode_audio(output_path, '') 
-		return output_path
+		return audio_reencode_aac(output_path)
 
 	} catch(e) {
 		console.log(`Can not add fade to ${input_path}, error: `, e)

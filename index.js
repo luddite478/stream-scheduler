@@ -335,7 +335,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			audio_files.length > 1 && 
 		    video_files.length === 1 && 
 		    video_files[0].hasOwnProperty('video')) { 
-			console.log('++++++Multiple audio, one video [concat audio]')
+			console.log('+++ Multiple audio, one video [concat audio]')
 			const src_video = video_files[0].video
 			// reencode audios  to aac
 			const aac_audios = audio_files.map(({audio}) => {
