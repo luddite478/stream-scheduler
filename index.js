@@ -275,7 +275,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			fs.unlinkSync(aac_audio)
 			fs.unlinkSync(audio_file)
 			fs.unlinkSync(video_file)
-			return result_mp4
+			return [ result_mp4 ]
 
 		// multiple audio, no video
 		} else if (
