@@ -328,7 +328,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			looped_audios.forEach(audio => fs.unlinkSync(audio))
 			fs.unlinkSync(merged_audio)
 			fs.unlinkSync(video_file)
-			return result_mp4
+			return [ result_mp4 ]
 
 		// multiple audio, one image
 		} else if (audio_files.length > 0 && 
