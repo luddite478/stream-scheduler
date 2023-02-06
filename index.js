@@ -220,7 +220,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			fs.renameSync(looped_video, output_path)
 			fs.unlinkSync(src_video)
 
-			return output_path
+			return [ output_path ]
 
 		// no video, one audio	
 		} else if (
@@ -281,34 +281,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 		} else if (
 			audio_files.length > 1 && 
 		    video_files.length === 0) { 
-			// concat audio 
-			// const aac_audios = audio_files.map(({audio}) => {
-			// 	return audio_reencode_aac(audio)
-			// })
-			// const concatenated_audio = concat_audio(aac_audios)
-			// const { repeats: a_repeats, 
-			// 	    remainder: a_remainder }  = get_number_of_repeats_and_remainder(concatenated_audio, params.duration)
-			// // loop to match duration
-			// const looped_audio = loop_audio(concatenated_audio, a_repeats)
-			
-			// // choose default video
-			// const resolution = process.env.DEFAULT_RESOLUTION
-			// let dflt_video = fs.readdirSync('videos/default')
-			// 	.filter(file => file.includes(resolution))
-			// 	.sort((a, b) => 0.5 - Math.random())[0]
-
-			// dflt_video = path.join('videos/default', dflt_video)
-			// const video = video_to_target_duration(dflt_video, params.duration)		
-			// params = { ...params, resolution }
-			// merge_audio_and_video(looped_audio, video, params, output_path)
-			// // fs.unlinkSync(concatenated_audio)			
-			// // fs.unlinkSync(looped_audio)
-			// // fs.unlinkSync(aac_audio)
-			// return output_path
-
-			// generate waveform videos with timer
-
-			// choose default video
+	
 			const aac_audios = audio_files.map(({audio}) => {
 				return audio_reencode_aac(audio)
 			})
@@ -320,12 +293,7 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			const wave_timer_videos = aac_audios.map((audio) => {
 				return generate_waveform_with_timer(audio, params)
 			})
-			// const concatenated_videos = concat_video(wave_timer_videos)
-			// const { repeats: v_repeats, 
-			// 	    remainder: v_remainder }  = get_number_of_repeats_and_remainder(concatenated_videos, params.duration)
-			// const video = video_to_target_duration(concatenated_videos, params.duration)	
-			// fs.renameSync(video, output_path)
-
+		
 			const output_videos = wave_timer_videos.map(f => {
 				const filename = path.basename(f)
 				const dest_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, filename)
