@@ -303,6 +303,12 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 
 			return output_videos
 
+		} else if (
+			audio_files.length === 0 && 
+		    video_files.length > 1) { 
+	
+			return video_files.map(({video}) => video)
+
 
 		// // multiple audio, one video [merge audio]
 		// } else if (
