@@ -306,8 +306,15 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 		} else if (
 			audio_files.length === 0 && 
 		    video_files.length > 1) { 
-	
-			return video_files.map(({video}) => video)
+			
+			const output_videos = wave_timer_videos.map(({video}) => {
+				const filename = path.basename(video)
+				const dest_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, video)
+				fs.renameSync(video, dest_path)
+				return dest_path
+			})
+
+			return output_videos
 
 
 		// // multiple audio, one video [merge audio]
