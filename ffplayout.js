@@ -268,7 +268,24 @@ function get_number_of_repeats_and_remainder(file_duration, target_duration) {
 	return { repeats, remainder }
 }
 
+function merge_day_playlists(playlists) { 
+	try {
+		if (playlists.length < 1 ) {
+			throw new Error('playlists length is less than 1, something went wrong')
+		}	
+
+		let c = 0
+		playlists[0].forEach(track => {
+			const track_duration = track.out
+		})
+
+	} catch(e) {
+		console.log('Can not merge playlists (merge_day_playlists): ', e)
+	}
+}
+
 function generate_playlists(pages_data) {
+	console.log('CHECK DATA', JSON.stringify(pages_data, null, 2))
 	// find dates in pages data
 	const dates = [...new Set(
 			pages_data.map(page => page.meta.play_time.playlist_day
@@ -313,7 +330,6 @@ function generate_playlists(pages_data) {
 			const page_output_single_loop = [] 
 			p.output.media_files.forEach(media => {
 				const media_duration = get_duration(media)
-				console.log(media)
 				page_output_sum_duration+=media_duration
 				page_output_single_loop.push({
 					in: 0,

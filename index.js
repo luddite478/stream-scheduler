@@ -491,7 +491,6 @@ function squash_playlist(ffplayout_playlist) {
 
 function set_pages_duration(pages_data) {
 
-	const today_yyyy_mm_dd = format(parseISO(formatISO(new Date())), "yyyy-MM-dd")
 	const pages_without_play_time = []
 	const pages_with_play_time = []
 
@@ -537,7 +536,7 @@ async function get_pages_data() {
 		}
 
 		pages_meta = filter_out_not_ready_pages(pages_meta)
-		if (!pages_meta) {
+		if (!pages_meta || pages_meta.length === 0) {
 			return null
 		}
 
@@ -555,7 +554,108 @@ async function get_pages_data() {
 	}
 }
 
+function toAbsSec(date) {
+	return new Date(date).getTime()	
+}
+
+function find_overlappying(schedule) {
+  
+  const l = schedule.length
+  const ret = {}
+  
+  // loop over each item twice
+  for (let i = 0; i < l; i++) {
+    for (let j = 0; j < l; j++) {
+
+      const left = schedule[j]
+      const right = schedule[i]
+      
+      // set the status to the return object
+      ret[left.meta.id] = ret[left.meta.id] || {
+        ...left,
+        overlap: []
+      }
+      
+      // don't process for the same key
+      if (i === j) {
+        continue
+      }
+      
+      // get the start and stop times as minutes to compare
+      const leftStart = toAbsSec(left.meta.play_time.start)
+      const leftStop = toAbsSec(left.meta.play_time.end)
+      const rightStart = toAbsSec(right.meta.play_time.start)
+      const rightStop = toAbsSec(right.meta.play_time.end)
+      
+      // compare the start and stop times for overlapping
+      if (
+        (leftStart > rightStart && leftStart < rightStop) ||
+        (leftStop > rightStart && leftStop < rightStop)
+      ) {
+        // add time to overlapping status identifier
+        ret[left.meta.id].overlap.push(right.meta.id)
+      }
+    }
+  }
+  return ret
+}
+
+function handle_pages_overlay_play_time(pages_data) {
+	const page_to_overlaying_pages_mapping = []
+	pages_data.forEach(page1 => {
+		const overlaying_pages = []
+		pages_data.forEach(page2 => {
+
+			if (page1.meta.id === page2.meta.id) {
+				return
+			}
+
+			const page1_end = new Date(page1.meta.play_time.end).getTime()
+			const page2_start = new Date(page2.meta.play_time.start).getTime()
+			if (page1_end > page2_start) {
+				overlaying_pages.push({ 
+					start_sec: page2_start,
+					start_utc: page2.meta.play_time.start
+				})
+			}		
+		})
+
+		
+		// const first_overlay = overlaying_pages_starts.sort((a,b) => {
+		// 	return a.start_sec - b.start_sec
+		// })[0].start_utc
+
+		page_to_overlaying_pages_mapping.push({
+			page_id: page1.meta.id,
+			overlays: overlaying_pages
+		})
+		// console.log(page1.meta.play_time.start)
+		// console.log(overlaying_pages_starts.sort((a,b) => {
+		// 	return a.start_sec - b.start_sec
+		// }))
+
+		// return {
+		// 	...page1,
+		// 	meta: {
+		// 		...page1.meta,
+		// 		play_time: {
+		// 			...page1.meta.play_time,
+		// 			end: first_overlay
+		// 		}
+		// 	}
+		// }
+	})
+
+	console.log(JSON.stringify(page_to_overlaying_pages_mapping, null, 2))
+}
+
 function handle_pages_time_data(pages_data) {
+	// console.log('BEFORE', JSON.stringify(pages_data,null,2))
+	pages_data = find_overlappying(pages_data)
+	// pages_data.forEach(p => {
+	// 	console.log(p.overlap)
+	// })
+	console.log('AFTER', JSON.stringify(pages_data,null,2))
 	pages_data = set_pages_duration(pages_data)
 	pages_data = set_pages_playlist_dates(pages_data) //playlist range 24h 06:00-05:59
 	return filter_outdated_pages(pages_data)

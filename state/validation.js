@@ -4,7 +4,12 @@ const ajv = new Ajv()
 const schema = {
   type: "object",
   properties: {
-    pages: {type: "array"}
+    pages: {
+      type: "array",
+      items: {
+        type: "object"
+      }
+    }
   },
   required: ["pages"],
   additionalProperties: true

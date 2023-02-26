@@ -26,6 +26,7 @@ function save_pages_state(pages_data) {
 		}
 	}
 
+	new_state.pages = new_state.pages.filter(Boolean) 
 	const json_new_state = JSON.stringify(new_state, null, 2)
 	console.log(`\nSaving state to ${STATE_FILE}...`)
 	fs.writeFileSync(STATE_FILE, json_new_state)
