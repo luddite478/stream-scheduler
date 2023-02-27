@@ -310,7 +310,9 @@ function process_page_media_files(audio_files, video_files, params, output_path)
 			
 			const output_videos = video_files.map(({video}) => {
 				const filename = path.basename(video)
+				console.log('filename', video)
 				const dest_path = path.join(process.env.FFPLAYOUT_MEDIA_FOLDER, video)
+				console.log('dest_path',dest_path)
 				fs.renameSync(video, dest_path)
 				return dest_path
 			})
