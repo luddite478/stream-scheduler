@@ -94,7 +94,7 @@ async function get_playlist_pages_data(playlist_pages_meta) {
 					meta: { 
 						id:	page_meta.id,
 						play_time: page_meta.properties['play time'].date,
-						params: page_meta.properties.params.rich_text,
+						// params: page_meta.properties.params.rich_text,
 						last_edited_time: page_meta.last_edited_time,
 						tags: page_meta.properties['tags'].multi_select.map(t=>t.name)
 					},
