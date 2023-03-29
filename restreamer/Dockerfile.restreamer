@@ -1,0 +1,5 @@
+FROM jrottenberg/ffmpeg
+
+ENTRYPOINT [ "ffmpeg" ]
+
+CMD [ "-re", "-i", "/hls/stream.m3u8", "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-preset", "ultrafast", "-r", "25", "-g", "50", "-b:v", "1000k", "-bufsize", "2000k", "-maxrate", "2000k", "-acodec", "libmp3lame", "-ar", "44100", "-b:a", "128k", "-f", "flv", "" ]

@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  # ffplayout:
+  #   image: ffplayout
+  #   privileged: true
+  #   cap_add:
+  #     - NET_ADMIN
+  #   volumes:
+  #     - ./hls:/hls
+  
+  # stream_viewer:
+  #   image: stream_viewer
+  #   depends_on:
+  #     - ffplayout
+  #   ports:
+  #     - "1935:1935"
+  #   volumes:
+  #     - ./hls:/hls
+
+  restreamer:
+    image: restreamer
+    # depends_on:
+    #   - ffplayout
+    restart: on-failure
+    volumes:
+      - /hls:/hls
+
