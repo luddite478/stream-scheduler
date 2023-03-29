@@ -287,3 +287,12 @@
 # nohup ffmpeg -i brown_noise24.wav -stream_loop -1 -i color_video.mp4 -c:v libx26
 # 4 -r 25 -pix_fmt yuv420p -filter_complex "showwaves=s=2400x800:mode=cline:r=25:colors=white[v_w];[1:v][v_w]overlay=forma
 # t=auto:x=(W-w)/2:y=(H-h)/2,format=yuv420p[over];" -map "[over]"  "noise_wave.mp4" &
+
+
+# Install docker
+
+# Install pip
+
+# pip install gdown
+
+# add /home/luddite478/.local/bin to PATH
