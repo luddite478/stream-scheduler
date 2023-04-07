@@ -13,12 +13,15 @@ services:
       - "8787:8787"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /root/video:/var/lib/ffplayout/tv-media
-      - /root/video/live:/usr/share/ffplayout/public/live
+      - /root/stream-scheduler-files/media:/var/lib/ffplayout/tv-media
+      - /root/stream-scheduler-files/live:/usr/share/ffplayout/public/live
       - ./player/ffplayout.yml:/etc/ffplayout/ffplayout.yml
 
   stream-server:
     image: stream-server
+    build:
+      context: /stream-server
+      dockerfile: Dockerfile
 #    depends_on:
 #      - restreamer-node
     ports:
@@ -26,4 +29,12 @@ services:
     volumes:
       - /root/video/live:/hls
 
-#  restreamer-node:
+  processing-server:
+    image: processing-server
+    build:
+      context: ./processing
+      dockerfile: Dockerfile    
+    ports:
+      - "1935:1935"
+#    volumes:
+#      - /root/video/
