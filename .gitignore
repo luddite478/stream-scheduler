@@ -16,3 +16,4 @@ prod-ffplayout.yml
 Dockerfile
 test.js
 ansible/inventory.yaml
+build

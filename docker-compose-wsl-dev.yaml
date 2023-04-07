@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  ffplayout:
+    image: luddite478/ffplayout
+    user: root
+    privileged: true
+    # depends_on:
+    #   - stream-server
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8787:8787"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - ./player/media/tv-media:/var/lib/ffplayout/tv-media
+      - ./player/media/live:/usr/share/ffplayout/public/live
+      - ./player/ffplayout.yml:/etc/ffplayout/ffplayout.yml
+
+  stream-server:
+    image: stream-server
+    build:
+      context: ./stream-server
+      dockerfile: Dockerfile
+#    depends_on:
+#      - restreamer-node
+    ports:
+      - "1935:1935"
+    # volumes:
+    #   - /root/video/live:/hls
+
+#  restreamer-node:
